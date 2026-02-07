@@ -442,7 +442,11 @@ app.post("/make-server-2fad19e1/teacher/grades", async (c) => {
             };
             expEarned = gradeMap[grade.grade] || Math.floor(percentage);
           } else {
-            expEarned = Math.floor(percentage);
+            // More precise calculation for numerical scores
+            // Give 100% of percentage as EXP, plus a small bonus for higher scores
+            const baseExp = Math.floor(percentage);
+            const bonus = percentage >= 90 ? 10 : (percentage >= 80 ? 5 : 0);
+            expEarned = baseExp + bonus;
           }
           
           notifications.push({
@@ -1399,42 +1403,26 @@ app.get("/make-server-2fad19e1/teacher/task-stats", async (c) => {
       const totalStudents = assignedClassStudents.length + manualClassStudents.length;
       console.log('Students in class:', totalStudents, '(Assigned:', assignedClassStudents.length, 'Manual:', manualClassStudents.length, ')');
 
-      // Load grades for this task
-      const taskGrades = await kv.get(`task_grades:${task.id}`) || {};
-      
+      // OPTIMIZED: Count completions and attempts from the studentTasksMap
       let completed = 0;
       let attempted = 0;
 
-      // Check assigned students
-      for (const assignment of assignedClassStudents) {
-        const studentEmail = assignment.studentEmail;
-        const studentTasks = studentTasksMap.get(studentEmail) || [];
+      const checkStudent = (email) => {
+        const studentTasks = studentTasksMap.get(email) || [];
         const studentTask = studentTasks.find(t => t.id === task.id);
         
-        // Count as completed if they have a grade
-        if (taskGrades[studentEmail] !== undefined) {
-          completed++;
-          attempted++;
-        } else if (studentTask && studentTask.started) {
-          // Count as attempted if they started but have no grade
-          attempted++;
+        if (studentTask) {
+          if (studentTask.completed) {
+            completed++;
+            attempted++;
+          } else if (studentTask.started || studentTask.attempted) {
+            attempted++;
+          }
         }
-      }
+      };
 
-      // Check manual students
-      for (const student of manualClassStudents) {
-        const studentTasks = studentTasksMap.get(student.email) || [];
-        const studentTask = studentTasks.find(t => t.id === task.id);
-        
-        // Count as completed if they have a grade
-        if (taskGrades[student.email] !== undefined) {
-          completed++;
-          attempted++;
-        } else if (studentTask && studentTask.started) {
-          // Count as attempted if they started but have no grade
-          attempted++;
-        }
-      }
+      assignedClassStudents.forEach(a => checkStudent(a.studentEmail));
+      manualClassStudents.forEach(s => checkStudent(s.email));
 
       console.log('Task stats - Total:', totalStudents, 'Attempted:', attempted, 'Completed:', completed);
 
