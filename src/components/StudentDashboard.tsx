@@ -791,14 +791,16 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
                         ) : (
                           <div className="space-y-3">
                             {grades.slice(0, 10).map((grade) => {
-                              const badge = getGradeBadge(grade.score, grade.maxScore);
-                              const expGained = Math.floor((grade.score / grade.maxScore) * 100);
+                              const badge = getGradeBadge(grade.score, grade.maxScore, grade.grade);
+                              const expGained = grade.grade ? (
+                                { 'A+': 100, 'A': 95, 'A-': 90, 'B+': 85, 'B': 80, 'B-': 75, 'C+': 70, 'C': 65, 'C-': 60, 'D': 50, 'F': 0 }[grade.grade] || 0
+                              ) : Math.floor((grade.score / grade.maxScore) * 100);
                               return (
                                 <div key={grade.id} className="p-3 sm:p-4 rounded-lg bg-gradient-to-r from-gray-50 to-white border hover:shadow-md transition-shadow">
                                   <div className="flex items-start justify-between mb-2">
                                     <div className="flex-1 min-w-0">
                                       <h4 className="font-medium text-sm sm:text-base truncate">{grade.assignment}</h4>
-                                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{grade.subject}</p>
+                                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{grade.subject || 'Academic'}</p>
                                     </div>
                                     <Badge className={`bg-gradient-to-r ${badge.color} text-white border-0 shadow-sm ml-2`}>
                                       {badge.label}
@@ -806,7 +808,9 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
                                   </div>
                                   <div className="flex items-center justify-between text-xs sm:text-sm">
                                     <span className="text-muted-foreground">
-                                      {grade.score}/{grade.maxScore} ({((grade.score / grade.maxScore) * 100).toFixed(0)}%)
+                                      {grade.score != null && grade.maxScore ? (
+                                        `${grade.score}/${grade.maxScore} (${((grade.score / grade.maxScore) * 100).toFixed(0)}%)`
+                                      ) : 'Graded'}
                                     </span>
                                     <div className="flex items-center gap-1 text-yellow-600 font-medium">
                                       <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -844,8 +848,10 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
                   ) : (
                     <div className="space-y-4">
                       {grades.map((grade) => {
-                        const badge = getGradeBadge(grade.score, grade.maxScore);
-                        const expGained = Math.floor((grade.score / grade.maxScore) * 100);
+                        const badge = getGradeBadge(grade.score, grade.maxScore, grade.grade);
+                        const expGained = grade.grade ? (
+                          { 'A+': 100, 'A': 95, 'A-': 90, 'B+': 85, 'B': 80, 'B-': 75, 'C+': 70, 'C': 65, 'C-': 60, 'D': 50, 'F': 0 }[grade.grade] || 0
+                        ) : Math.floor((grade.score / grade.maxScore) * 100);
                         return (
                           <div key={grade.id} className="p-4 sm:p-6 rounded-xl bg-gradient-to-r from-white to-gray-50 border shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-3 gap-3">
@@ -859,21 +865,25 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
                                 <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                                   <span className="flex items-center gap-1">
                                     <BookOpen className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    {grade.subject}
+                                    {grade.subject || 'Academic'}
                                   </span>
                                   <span className="flex items-center gap-1">
                                     <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    {new Date(grade.date).toLocaleDateString()}
+                                    {grade.date ? new Date(grade.date).toLocaleDateString() : 'N/A'}
                                   </span>
                                 </div>
                               </div>
                               <div className="text-left sm:text-right">
                                 <div className="text-xl sm:text-2xl font-bold text-indigo-600 mb-1">
-                                  {grade.score}/{grade.maxScore}
+                                  {grade.score != null && grade.maxScore ? (
+                                    `${grade.score}/${grade.maxScore}`
+                                  ) : badge.label}
                                 </div>
-                                <div className="text-xs sm:text-sm text-muted-foreground">
-                                  {((grade.score / grade.maxScore) * 100).toFixed(0)}%
-                                </div>
+                                {grade.score != null && grade.maxScore && (
+                                  <div className="text-xs sm:text-sm text-muted-foreground">
+                                    {((grade.score / grade.maxScore) * 100).toFixed(0)}%
+                                  </div>
+                                )}
                               </div>
                             </div>
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t">
