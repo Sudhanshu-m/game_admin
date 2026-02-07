@@ -267,7 +267,23 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
     }
   };
 
-  const getGradeBadge = (score, maxScore) => {
+  const getGradeBadge = (score, maxScore, letterGrade) => {
+    if (letterGrade) {
+      const colors = {
+        'A+': 'from-green-500 to-emerald-600',
+        'A': 'from-green-500 to-emerald-600',
+        'A-': 'from-blue-500 to-blue-600',
+        'B+': 'from-blue-400 to-blue-500',
+        'B': 'from-blue-400 to-blue-500',
+        'B-': 'from-yellow-500 to-orange-400',
+        'C+': 'from-yellow-500 to-orange-500',
+        'C': 'from-orange-400 to-orange-500',
+        'C-': 'from-orange-500 to-red-400',
+        'D': 'from-red-400 to-red-500',
+        'F': 'from-red-500 to-red-600'
+      };
+      return { label: letterGrade, color: colors[letterGrade] || 'from-gray-400 to-gray-500' };
+    }
     if (score == null || maxScore == null || maxScore === 0) {
       return { label: 'N/A', color: 'from-gray-400 to-gray-500' };
     }

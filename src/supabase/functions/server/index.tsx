@@ -457,6 +457,21 @@ app.post("/make-server-2fad19e1/teacher/grades", async (c) => {
           
           await kv.set(notificationsKey, notifications);
           console.log('Notification created for:', grade.studentEmail);
+
+          // Update student's total EXP and Level
+          const studentProfileKey = `student_profile:${grade.studentEmail}`;
+          const studentProfile = await kv.get(studentProfileKey) || {};
+          const currentEXP = studentProfile.exp || 0;
+          const newEXP = currentEXP + expEarned;
+          const newLevel = Math.floor(newEXP / 500) + 1;
+          
+          await kv.set(studentProfileKey, {
+            ...studentProfile,
+            exp: newEXP,
+            level: newLevel,
+            lastUpdated: new Date().toISOString()
+          });
+          console.log(`EXP updated for ${grade.studentEmail}: +${expEarned} (Total: ${newEXP})`);
           
           // Track student activity for streak when grade is assigned
           await trackStudentActivity(grade.studentEmail);
