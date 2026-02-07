@@ -1408,28 +1408,44 @@ app.get("/make-server-2fad19e1/teacher/task-stats", async (c) => {
       const manualClassStudents = manualStudents.filter(s => s.classId === task.classId);
       
       const totalStudents = assignedClassStudents.length + manualClassStudents.length;
-      console.log('Students in class:', totalStudents, '(Assigned:', assignedClassStudents.length, 'Manual:', manualClassStudents.length, ')');
+      console.log('Students in class:', totalStudents);
 
-      // OPTIMIZED: Count completions and attempts from the studentTasksMap
+      // Get grades assigned by this teacher to check completion
+      // Prefix for teacher grades is 'dental_college_grades:'
+      const teacherGrades = await kv.get(`dental_college_grades:${user.id}`) || [];
+      
       let completed = 0;
       let attempted = 0;
 
-      const checkStudent = (email) => {
-        const studentTasks = studentTasksMap.get(email) || [];
-        const studentTask = studentTasks.find(t => t.id === task.id);
-        
-        if (studentTask) {
-          if (studentTask.completed) {
-            completed++;
-            attempted++;
-          } else if (studentTask.started || studentTask.attempted) {
-            attempted++;
+      const studentEmails = new Set([
+        ...assignedClassStudents.map(a => a.studentEmail),
+        ...manualClassStudents.map(m => m.email)
+      ]);
+
+      for (const email of studentEmails) {
+        // A task is completed if there's a grade for this student and this assignment
+        const hasGrade = teacherGrades.find(g => 
+          g.studentEmail === email && 
+          (g.assignment === task.title || g.id === task.id)
+        );
+
+        if (hasGrade) {
+          completed++;
+          attempted++;
+        } else {
+          // Fallback to student_tasks for "started" status
+          const studentTasks = studentTasksMap.get(email) || [];
+          const studentTask = studentTasks.find(t => t.id === task.id || t.title === task.title);
+          if (studentTask) {
+            if (studentTask.completed) {
+              completed++;
+              attempted++;
+            } else if (studentTask.started || studentTask.attempted) {
+              attempted++;
+            }
           }
         }
-      };
-
-      assignedClassStudents.forEach(a => checkStudent(a.studentEmail));
-      manualClassStudents.forEach(s => checkStudent(s.email));
+      }
 
       console.log('Task stats - Total:', totalStudents, 'Attempted:', attempted, 'Completed:', completed);
 
