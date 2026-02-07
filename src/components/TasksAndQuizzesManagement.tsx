@@ -313,7 +313,7 @@ export function TasksAndQuizzesManagement({
           },
           body: JSON.stringify({
             taskId,
-            listType: 'attempted'
+            listType: 'assigned'
           })
         }
       );
