@@ -443,9 +443,16 @@ app.post("/make-server-2fad19e1/teacher/grades", async (c) => {
             expEarned = gradeMap[grade.grade] || Math.floor(percentage);
           } else {
             // More precise calculation for numerical scores
-            // Give 100% of percentage as EXP, plus a small bonus for higher scores
+            // EXP is directly proportional to the percentage achieved
+            const percentage = (grade.score / grade.maxScore) * 100;
             const baseExp = Math.floor(percentage);
-            const bonus = percentage >= 90 ? 10 : (percentage >= 80 ? 5 : 0);
+            
+            // Bonus EXP for high performance
+            let bonus = 0;
+            if (percentage >= 95) bonus = 15;
+            else if (percentage >= 90) bonus = 10;
+            else if (percentage >= 80) bonus = 5;
+            
             expEarned = baseExp + bonus;
           }
           

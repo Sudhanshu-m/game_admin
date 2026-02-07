@@ -162,7 +162,12 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
       // Check if grade has valid score and maxScore
       if (grade.score != null && grade.maxScore != null && grade.maxScore > 0) {
         const percentage = (grade.score / grade.maxScore) * 100;
-        return sum + Math.floor(percentage);
+        const baseExp = Math.floor(percentage);
+        let bonus = 0;
+        if (percentage >= 95) bonus = 15;
+        else if (percentage >= 90) bonus = 10;
+        else if (percentage >= 80) bonus = 5;
+        return sum + baseExp + bonus;
       }
       // If using letter grades, use grade map
       if (grade.grade) {
