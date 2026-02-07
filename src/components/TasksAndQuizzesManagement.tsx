@@ -280,39 +280,17 @@ export function TasksAndQuizzesManagement({
           </div>
 
           {/* Action Stats */}
-          <div className="grid grid-cols-3 gap-4 pt-3 border-t">
-            <button
-              onClick={() => fetchStudentsList(task.id, 'assigned')}
-              className="text-center p-3 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <Users className="w-4 h-4 text-gray-500" />
-              </div>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalStudents}</p>
-              <p className="text-xs text-muted-foreground">Assigned</p>
-            </button>
-            
-            <button
+          <div className="pt-3 border-t">
+            <Button
               onClick={() => fetchStudentsList(task.id, 'attempted')}
-              className="text-center p-3 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 transition-colors py-6"
             >
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <TrendingUp className="w-4 h-4 text-blue-500" />
+              <Users className="w-5 h-5" />
+              <div className="text-left">
+                <p className="text-sm font-semibold">Manage Students</p>
+                <p className="text-xs text-blue-500">{stats.totalStudents} Students Assigned</p>
               </div>
-              <p className="text-2xl font-bold text-blue-600">{stats.attempted}</p>
-              <p className="text-xs text-muted-foreground">Attempted</p>
-            </button>
-            
-            <button
-              onClick={() => fetchStudentsList(task.id, 'completed')}
-              className="text-center p-3 rounded-lg hover:bg-green-50 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-              </div>
-              <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
-              <p className="text-xs text-muted-foreground">Completed</p>
-            </button>
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -322,7 +300,7 @@ export function TasksAndQuizzesManagement({
   const fetchStudentsList = async (taskId, listType) => {
     setLoadingStudents(true);
     setSelectedTaskForStudents(taskId);
-    setStudentListType(listType);
+    setStudentListType('attempted');
 
     try {
       const response = await fetch(
@@ -335,7 +313,7 @@ export function TasksAndQuizzesManagement({
           },
           body: JSON.stringify({
             taskId,
-            listType
+            listType: 'attempted'
           })
         }
       );
@@ -602,108 +580,124 @@ export function TasksAndQuizzesManagement({
         </TabsContent>
       </Tabs>
 
-      {/* Student List Dialog */}
+      {/* Student Management Dialog */}
       <Dialog open={isStudentDialogOpen} onOpenChange={setIsStudentDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden">
-          <DialogHeader>
-            <DialogTitle className="text-2xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              {studentListType === 'assigned' ? '👥 Assigned Students' :
-               studentListType === 'attempted' ? '📝 Attempted Students' :
-               studentListType === 'completed' ? '✅ Completed Students' :
-               '👥 Students'}
-            </DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
-              {studentListType === 'assigned' && 'List of students assigned to this task.'}
-              {studentListType === 'attempted' && 'List of students who have attempted this task.'}
-              {studentListType === 'completed' && 'List of students who have completed this task.'}
-            </DialogDescription>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-0 shadow-2xl">
+          <DialogHeader className="p-6 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-t-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-2xl font-bold text-white flex items-center gap-2">
+                  <Users className="w-6 h-6" />
+                  Student Submissions
+                </DialogTitle>
+                <DialogDescription className="text-blue-100 mt-1">
+                  Manage and grade student submissions for this task
+                </DialogDescription>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsStudentDialogOpen(false)}
+                className="text-white hover:bg-white/20 border-0"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
           </DialogHeader>
-          <div className="mt-4 overflow-y-auto max-h-[60vh]">
+
+          <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
             {loadingStudents ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="text-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-3"></div>
-                  <p className="text-sm text-muted-foreground">Loading students...</p>
-                </div>
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-muted-foreground animate-pulse">Loading student data...</p>
+              </div>
+            ) : studentsList.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-xl border-2 border-dashed border-gray-200">
+                <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900">No Students Found</h3>
+                <p className="text-muted-foreground">No students are currently associated with this task.</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {studentsList.length > 0 ? (
-                  <>
-                    <div className="mb-4 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
-                      <p className="text-sm font-medium text-purple-900">
-                        Total: <span className="text-xl font-bold">{studentsList.length}</span> student{studentsList.length !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                    {studentsList.map((student, index) => (
-                      <div 
-                        key={student.id || index} 
-                        className="flex items-center justify-between p-4 bg-gradient-to-br from-white to-gray-50 rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center text-white font-semibold shadow-md">
-                            {student.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900">{student.name}</p>
-                            <p className="text-xs text-muted-foreground">Roll No: {student.rollNumber || student.email}</p>
-                          </div>
+                {studentsList.map((student) => {
+                  const currentGrade = studentGrades[student.email] || student.grade;
+                  const isCompleted = !!currentGrade;
+                  
+                  return (
+                    <div 
+                      key={student.email} 
+                      className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200 shadow-sm ${
+                        isCompleted 
+                          ? 'bg-green-50 border-green-100 hover:shadow-md' 
+                          : 'bg-white border-gray-100 hover:border-blue-200 hover:shadow-md'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-full ${isCompleted ? 'bg-green-100' : 'bg-blue-100'}`}>
+                          <Users className={`w-5 h-5 ${isCompleted ? 'text-green-600' : 'text-blue-600'}`} />
                         </div>
-                        <div className="flex items-center gap-2">
-                          {/* Grade Badge - Show current grade */}
-                          {student.grade && (
-                            <Badge className={getGradeColor(student.grade)}>
-                              <Award className="w-3 h-3 mr-1" />
-                              {student.grade}
-                            </Badge>
-                          )}
-                          
-                          {/* Grade Selection Dropdown - Only show for assigned students */}
-                          {studentListType === 'assigned' && (
-                            <Select
-                              value={student.grade || ''}
-                              onValueChange={(value) => handleGradeChange(student.email, value)}
-                            >
-                              <SelectTrigger className="w-28 h-8">
-                                <SelectValue placeholder="Assign Grade" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {letterGrades.map(grade => (
-                                  <SelectItem key={grade.value} value={grade.value}>
-                                    {grade.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
+                        <div>
+                          <p className="font-semibold text-gray-900">{student.name || 'Unknown Student'}</p>
+                          <p className="text-sm text-muted-foreground">{student.email}</p>
                         </div>
                       </div>
-                    ))}
-                  </>
-                ) : (
-                  <div className="py-12 text-center">
-                    <div className="p-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                      <Users className="w-8 h-8 text-gray-400" />
+                      
+                      <div className="flex items-center gap-4">
+                        <Badge 
+                          variant="secondary"
+                          className={`px-3 py-1 ${
+                            isCompleted 
+                              ? 'bg-green-200 text-green-800 border-green-300' 
+                              : 'bg-gray-100 text-gray-600 border-gray-200'
+                          }`}
+                        >
+                          {isCompleted ? (
+                            <span className="flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              Completed
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              Pending
+                            </span>
+                          )}
+                        </Badge>
+                        
+                        <div className="w-32">
+                          <Select
+                            value={currentGrade || "none"}
+                            onValueChange={(val) => handleGradeChange(student.email, val)}
+                          >
+                            <SelectTrigger className={`h-9 border-2 transition-colors ${
+                              isCompleted 
+                                ? 'border-green-300 bg-white text-green-800' 
+                                : 'border-gray-200 bg-white'
+                            }`}>
+                              <SelectValue placeholder="Grade" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none" disabled>Select Grade</SelectItem>
+                              {letterGrades.map((g) => (
+                                <SelectItem key={g.value} value={g.value}>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`w-2 h-2 rounded-full ${g.color.split(' ')[0]}`} />
+                                    {g.label}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="text-lg font-medium mb-2">No Students Found</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {studentListType === 'assigned' && 'All students in this class have been graded. Check the Completed tab to see graded students.'}
-                      {studentListType === 'attempted' && 'No students have attempted this task yet.'}
-                      {studentListType === 'completed' && 'No students have been graded yet. Assign grades to students to complete their tasks.'}
-                    </p>
-                  </div>
-                )}
+                  );
+                })}
               </div>
             )}
           </div>
-          <div className="flex justify-end mt-6 pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={() => setIsStudentDialogOpen(false)}
-              className="hover:bg-gray-100"
-            >
-              Close
-            </Button>
+          <div className="p-4 border-t bg-gray-50 flex justify-end">
+             <Button variant="outline" onClick={() => setIsStudentDialogOpen(false)}>Close</Button>
           </div>
         </DialogContent>
       </Dialog>
