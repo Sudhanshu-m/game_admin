@@ -1591,113 +1591,97 @@ app.get("/make-server-2fad19e1/teacher/task-stats", async (c) => {
 
     // Get teacher's assigned students
     const teacherStudents = (await kv.get(`teacher_students:${user.id}`)) || [];
-    console.log("Total assigned students:", teacherStudents.length);
-
+    
     // Get manually added students (legacy)
     const manualStudents = (await kv.get(`students:${user.id}`)) || [];
-    console.log("Total manual students:", manualStudents.length);
+
+    // Get ALL teacher grades once for efficient lookup
+    const teacherGrades = (await kv.get(`dental_college_grades:${user.id}`)) || [];
+    console.log("Total teacher grades loaded:", teacherGrades.length);
 
     // OPTIMIZATION: Fetch all student tasks at once
     const allStudentTasksData = await kv.getByPrefix("student_tasks:");
-
-    // Create a map for quick lookup: email -> tasks
     const studentTasksMap = new Map();
     for (const item of allStudentTasksData) {
       if (item && item.key && item.value) {
-        const email = item.key.replace("student_tasks:", "");
+        const email = item.key.replace("student_tasks:", "").toLowerCase().trim();
         studentTasksMap.set(email, item.value);
       }
     }
-
-    console.log(
-      "Loaded tasks data for",
-      studentTasksMap.size,
-      "students (OPTIMIZED)",
-    );
 
     // Calculate statistics for each task
     const taskStats = {};
 
     for (const task of tasks) {
-      console.log("\n--- Processing task:", task.title, "ID:", task.id);
+      console.log(`\n--- Processing task: ${task.title} (ID: ${task.id}) ---`);
 
       // Find all students in this task's class
-      const assignedClassStudents = teacherStudents.filter(
-        (ts) => ts.classId === task.classId,
-      );
-      const manualClassStudents = manualStudents.filter(
-        (s) => s.classId === task.classId,
-      );
+      const assignedClassStudents = teacherStudents.filter(ts => ts.classId === task.classId);
+      const manualClassStudents = manualStudents.filter(s => s.classId === task.classId);
 
-      const totalStudents =
-        assignedClassStudents.length + manualClassStudents.length;
-      console.log("Students in class:", totalStudents);
+      const studentEmails = new Set([
+        ...assignedClassStudents.map(a => a.studentEmail?.toLowerCase().trim()),
+        ...manualClassStudents.map(m => m.email?.toLowerCase().trim())
+      ]);
+      // Remove any null/undefined
+      studentEmails.delete(undefined);
+      studentEmails.delete(null);
+      studentEmails.delete("");
 
-      // Get grades assigned by this teacher to check completion
-      // Prefix for teacher grades is 'dental_college_grades:'
-      const teacherGrades =
-        (await kv.get(`dental_college_grades:${user.id}`)) || [];
-
+      const totalStudents = studentEmails.size;
       let completed = 0;
       let attempted = 0;
 
-      const studentEmails = new Set([
-        ...assignedClassStudents.map((a) => a.studentEmail),
-        ...manualClassStudents.map((m) => m.email),
-      ]);
+      // Load task-specific grades from separate storage if exists
+      const specificTaskGrades = await kv.get(`task_grades:${task.id}`) || {};
 
       for (const email of studentEmails) {
-        // A task is completed if there's a grade for this student and this assignment
-        // We need to be flexible with matching (case-insensitive, trimmed)
-        const hasGrade = teacherGrades.find(
-          (g) =>
-            g.studentEmail?.toLowerCase().trim() === email?.toLowerCase().trim() &&
-            (g.assignmentId === task.id ||
-              g.taskId === task.id ||
-              g.id === task.id ||
-              g.assignment?.toLowerCase().trim() === task.title?.toLowerCase().trim()),
+        // 1. Check teacher grades first (authoritative source for completion)
+        const hasTeacherGrade = teacherGrades.find(g => 
+          g.studentEmail?.toLowerCase().trim() === email && 
+          (g.taskId === task.id || 
+           g.id === task.id || 
+           g.assignmentId === task.id ||
+           g.assignment?.toLowerCase().trim() === task.title?.toLowerCase().trim())
         );
 
-        if (hasGrade) {
+        // 2. Check task-specific storage
+        const hasSpecificGrade = specificTaskGrades[email] !== undefined;
+
+        if (hasTeacherGrade || hasSpecificGrade) {
           completed++;
           attempted++;
+          console.log(`  Student ${email}: Completed (via Grade)`);
         } else {
-          // Fallback to student_tasks for "started" status or manual completion
+          // 3. Check student_tasks as fallback
           const studentTasks = studentTasksMap.get(email) || [];
-          const studentTask = studentTasks.find(
-            (t) =>
-              t.id === task.id ||
-              t.taskId === task.id ||
-              t.title?.toLowerCase().trim() === task.title?.toLowerCase().trim(),
+          const studentTask = studentTasks.find(t => 
+            t.id === task.id || 
+            t.taskId === task.id || 
+            t.title?.toLowerCase().trim() === task.title?.toLowerCase().trim()
           );
+
           if (studentTask) {
-            if (studentTask.completed || studentTask.grade) {
+            if (studentTask.completed || studentTask.grade || studentTask.submitted) {
               completed++;
               attempted++;
+              console.log(`  Student ${email}: Completed (via student_tasks)`);
             } else if (studentTask.started || studentTask.attempted) {
               attempted++;
+              console.log(`  Student ${email}: Attempted`);
             }
           }
         }
       }
 
-      console.log(
-        "Task stats - Total:",
-        totalStudents,
-        "Attempted:",
-        attempted,
-        "Completed:",
-        completed,
-      );
+      console.log(`Final Stats for ${task.title}: Total=${totalStudents}, Completed=${completed}`);
 
       taskStats[task.id] = {
         totalStudents,
         completed,
         attempted,
-        completionRate:
-          totalStudents > 0 ? Math.round((completed / totalStudents) * 100) : 0,
-        attemptRate:
-          totalStudents > 0 ? Math.round((attempted / totalStudents) * 100) : 0,
+        completionRate: totalStudents > 0 ? Math.round((completed / totalStudents) * 100) : 0,
+        attemptRate: totalStudents > 0 ? Math.round((attempted / totalStudents) * 100) : 0
       };
     }
 
