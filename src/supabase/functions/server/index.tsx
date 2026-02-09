@@ -1619,24 +1619,24 @@ app.get("/make-server-2fad19e1/teacher/task-stats", async (c) => {
       const assignedClassStudents = teacherStudents.filter(ts => ts.classId === task.classId);
       const manualClassStudents = manualStudents.filter(s => s.classId === task.classId);
 
-      const studentEmails = new Set([
-        ...assignedClassStudents.map(a => a.studentEmail?.toLowerCase().trim()),
-        ...manualClassStudents.map(m => m.email?.toLowerCase().trim())
-      ]);
-      // Remove any null/undefined
-      studentEmails.delete(undefined);
-      studentEmails.delete(null);
-      studentEmails.delete("");
+      // Use a Set of emails to ensure unique counting per student
+      const studentEmails = new Set();
+      assignedClassStudents.forEach(a => {
+        if (a.studentEmail) studentEmails.add(a.studentEmail.toLowerCase().trim());
+      });
+      manualClassStudents.forEach(m => {
+        if (m.email) studentEmails.add(m.email.toLowerCase().trim());
+      });
 
       const totalStudents = studentEmails.size;
-      let completed = 0;
-      let attempted = 0;
+      let completedCount = 0;
+      let attemptedCount = 0;
 
       // Load task-specific grades from separate storage if exists
       const specificTaskGrades = await kv.get(`task_grades:${task.id}`) || {};
 
       for (const email of studentEmails) {
-        // 1. Check teacher grades first (authoritative source for completion)
+        // 1. Authoritative check: Teacher gradebook
         const hasTeacherGrade = teacherGrades.find(g => 
           g.studentEmail?.toLowerCase().trim() === email && 
           (g.taskId === task.id || 
@@ -1645,15 +1645,15 @@ app.get("/make-server-2fad19e1/teacher/task-stats", async (c) => {
            g.assignment?.toLowerCase().trim() === task.title?.toLowerCase().trim())
         );
 
-        // 2. Check task-specific storage
+        // 2. Check task-specific storage (legacy/direct grading)
         const hasSpecificGrade = specificTaskGrades[email] !== undefined;
 
+        // A student is ONLY "completed" if they have been GRADED by the teacher
         if (hasTeacherGrade || hasSpecificGrade) {
-          completed++;
-          attempted++;
-          console.log(`  Student ${email}: Completed (via Grade)`);
+          completedCount++;
+          attemptedCount++;
         } else {
-          // 3. Check student_tasks as fallback
+          // 3. Fallback to student_tasks for "started" status (attempted but not graded)
           const studentTasks = studentTasksMap.get(email) || [];
           const studentTask = studentTasks.find(t => 
             t.id === task.id || 
@@ -1662,26 +1662,25 @@ app.get("/make-server-2fad19e1/teacher/task-stats", async (c) => {
           );
 
           if (studentTask) {
-            if (studentTask.completed || studentTask.grade || studentTask.submitted) {
-              completed++;
-              attempted++;
-              console.log(`  Student ${email}: Completed (via student_tasks)`);
-            } else if (studentTask.started || studentTask.attempted) {
-              attempted++;
-              console.log(`  Student ${email}: Attempted`);
+            // Even if they marked it completed themselves, we only count it as "completed" for the bar
+            // if we have a grade. If they finished but no grade, it's just an "attempt".
+            if (studentTask.started || studentTask.attempted || studentTask.completed || studentTask.submitted) {
+              attemptedCount++;
             }
           }
         }
       }
 
-      console.log(`Final Stats for ${task.title}: Total=${totalStudents}, Completed=${completed}`);
+      // Ensure counts never exceed total students (no overflow)
+      const finalCompleted = Math.min(completedCount, totalStudents);
+      const finalAttempted = Math.min(Math.max(attemptedCount, finalCompleted), totalStudents);
 
       taskStats[task.id] = {
         totalStudents,
-        completed,
-        attempted,
-        completionRate: totalStudents > 0 ? Math.round((completed / totalStudents) * 100) : 0,
-        attemptRate: totalStudents > 0 ? Math.round((attempted / totalStudents) * 100) : 0
+        completed: finalCompleted,
+        attempted: finalAttempted,
+        completionRate: totalStudents > 0 ? Math.round((finalCompleted / totalStudents) * 100) : 0,
+        attemptRate: totalStudents > 0 ? Math.round((finalAttempted / totalStudents) * 100) : 0
       };
     }
 
