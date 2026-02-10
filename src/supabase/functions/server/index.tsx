@@ -1645,28 +1645,24 @@ app.get("/make-server-2fad19e1/teacher/task-stats", async (c) => {
            g.assignment?.toLowerCase().trim() === task.title?.toLowerCase().trim())
         );
 
-        // 2. Check task-specific storage (legacy/direct grading)
-        const hasSpecificGrade = specificTaskGrades[email] !== undefined;
+        // Check for specific task_grades mapping (legacy)
+        const taskGrades = await kv.get(`task_grades:${task.id}`) || {};
+        const hasSpecificGrade = taskGrades[email] !== undefined;
 
-        // A student is ONLY "completed" if they have been GRADED by the teacher
+        // FINAL AUTHORITATIVE CHECK: Student is only "completed" if they have a TEACHER grade
         if (hasTeacherGrade || hasSpecificGrade) {
           completedCount++;
           attemptedCount++;
         } else {
-          // 3. Fallback to student_tasks for "started" status (attempted but not graded)
+          // If no grade exists, it's NOT completed for the teacher's bar
           const studentTasks = studentTasksMap.get(email) || [];
           const studentTask = studentTasks.find(t => 
             t.id === task.id || 
-            t.taskId === task.id || 
             t.title?.toLowerCase().trim() === task.title?.toLowerCase().trim()
           );
 
-          if (studentTask) {
-            // Even if they marked it completed themselves, we only count it as "completed" for the bar
-            // if we have a grade. If they finished but no grade, it's just an "attempt".
-            if (studentTask.started || studentTask.attempted || studentTask.completed || studentTask.submitted) {
-              attemptedCount++;
-            }
+          if (studentTask && (studentTask.started || studentTask.attempted || studentTask.submitted)) {
+            attemptedCount++;
           }
         }
       }

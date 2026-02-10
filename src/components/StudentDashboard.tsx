@@ -186,7 +186,7 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
     const currentLevelEXP = totalEXP % 500;
     const nextLevelEXP = 500;
 
-    const completedAssignments = tasksData.filter(t => t.completed).length;
+    const completedAssignments = tasksData.filter(t => t.grade || (t.completed && t.grade)).length;
     const totalAssignments = tasksData.length;
 
     const streak = streakData?.currentStreak || 0;
@@ -202,7 +202,7 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
     });
   };
 
-  const markTaskComplete = async (taskId) => {
+  const markTaskAttempted = async (taskId) => {
     try {
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/task/${taskId}/complete`,
@@ -216,12 +216,12 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
       );
 
       if (response.ok) {
-        toast.success('Task marked as complete!');
+        toast.success('Task marked as attempted!');
         loadStudentData();
       }
     } catch (error) {
-      console.error('Error completing task:', error);
-      toast.error('Failed to mark task as complete');
+      console.error('Error attempting task:', error);
+      toast.error('Failed to mark task as attempted');
     }
   };
 
@@ -1030,6 +1030,16 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
                                 >
                                   <Clock className="w-4 h-4 mr-2" />
                                   Start Quiz
+                                </Button>
+                              )}
+                              {!task.completed && task.type !== 'quiz' && (
+                                <Button
+                                  onClick={() => markTaskAttempted(task.id)}
+                                  variant="outline"
+                                  className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 w-full sm:w-auto"
+                                >
+                                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                                  Mark Attempted
                                 </Button>
                               )}
                             </div>
