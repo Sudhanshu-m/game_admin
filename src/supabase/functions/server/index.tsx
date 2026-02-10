@@ -1008,7 +1008,8 @@ app.get("/make-server-2fad19e1/student/data", async (c) => {
 });
 
 // Mark task as complete
-app.post("/make-server-2fad19e1/student/task/:taskId/complete", async (c) => {
+// Student marking a task as attempted
+app.post("/make-server-2fad19e1/student/task/:taskId/attempt", async (c) => {
   try {
     const accessToken = c.req.header("Authorization")?.split(" ")[1];
     if (!accessToken) {
@@ -1035,7 +1036,7 @@ app.post("/make-server-2fad19e1/student/task/:taskId/complete", async (c) => {
 
     const updatedTasks = tasks.map((task) =>
       task.id === taskId
-        ? { ...task, completed: true, completedAt: new Date().toISOString() }
+        ? { ...task, attempted: true, attemptedAt: new Date().toISOString() }
         : task,
     );
 
@@ -1046,8 +1047,8 @@ app.post("/make-server-2fad19e1/student/task/:taskId/complete", async (c) => {
 
     return c.json({ success: true });
   } catch (error) {
-    console.log("Complete task error:", error);
-    return c.json({ error: "Failed to complete task: " + error.message }, 500);
+    console.log("Attempt task error:", error);
+    return c.json({ error: "Failed to mark as attempted: " + error.message }, 500);
   }
 });
 

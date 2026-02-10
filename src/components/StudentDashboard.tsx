@@ -189,14 +189,12 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
     const completedAssignments = tasksData.filter(t => t.grade || (t.completed && t.grade)).length;
     const totalAssignments = tasksData.length;
 
-    const streak = streakData?.currentStreak || 0;
-
     setStats({
       totalEXP,
       level,
       currentLevelEXP,
       nextLevelEXP,
-      streak,
+      streak: streakData?.currentStreak || 0,
       totalAssignments,
       completedAssignments
     });
@@ -205,7 +203,7 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
   const markTaskAttempted = async (taskId) => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/task/${taskId}/complete`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/task/${taskId}/attempt`,
         {
           method: 'POST',
           headers: {
