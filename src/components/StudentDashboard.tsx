@@ -718,14 +718,8 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
             {/* Dashboard View */}
             {activeView === 'dashboard' && (
               <>
-                {/* ... other dashboard content ... */}
-              </>
-            )}
-            {activeView === 'tasks' && (
-              <div className="space-y-8">
-                {/* Tasks content already added above */}
-              </div>
-            )}
+                {/* Daily Quest */}
+                {dailyQuest && (
                   <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-400 via-orange-500 to-pink-500 text-white mb-6 overflow-hidden relative">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
                     <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
