@@ -186,7 +186,8 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
     const currentLevelEXP = totalEXP % 500;
     const nextLevelEXP = 500;
 
-    const completedAssignments = tasksData.filter(t => t.grade || t.completed).length;
+    // Only count as completed if it has a grade assigned by teacher
+    const completedAssignments = tasksData.filter(t => t.grade).length;
     const totalAssignments = tasksData.length;
 
     setStats({
@@ -364,10 +365,134 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
     );
   }
 
-  // Sort tasks by creation date (newest first)
-  const sortedTasks = [...tasks].sort((a, b) => 
-    new Date(b.createdAt || b.dueDate) - new Date(a.createdAt || a.dueDate)
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    setIsUpdatingProfile(true);
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/profile/update`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(profileData)
+        }
+      );
+
+      if (response.ok) {
+        toast.success('Profile updated successfully!');
+        setIsProfileDialogOpen(false);
+        loadStudentData();
+      } else {
+        toast.error('Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Error updating profile');
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
+  // Profile Dialog Component
+  const ProfileDialog = () => (
+    <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl flex items-center gap-2">
+            <User className="w-6 h-6 text-indigo-600" />
+            My Profile
+          </DialogTitle>
+          <DialogDescription>
+            Update your profile information and account settings
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleUpdateProfile} className="space-y-6 py-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                value={profileData.name}
+                onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                placeholder="Enter your full name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                value={profileData.username}
+                onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
+                placeholder="Choose a username"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                value={profileData.email}
+                disabled
+                className="bg-gray-50"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="rollNumber">Roll Number</Label>
+              <Input
+                id="rollNumber"
+                value={profileData.rollNumber}
+                disabled
+                className="bg-gray-50"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="batch">Batch</Label>
+              <Input
+                id="batch"
+                value={profileData.batch}
+                onChange={(e) => setProfileData({ ...profileData, batch: e.target.value })}
+                placeholder="e.g. 2022-2026"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                value={profileData.phone}
+                onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                placeholder="Enter phone number"
+              />
+            </div>
+          </div>
+          <Separator />
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsProfileDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isUpdatingProfile}
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
+            >
+              {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
+
+  // Filter tasks into Ongoing and Completed
+  const ongoingTasks = sortedTasks.filter(t => !t.grade);
+  const completedTasks = sortedTasks.filter(t => t.grade);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -561,6 +686,9 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
         {/* Main Content */}
         <div className="flex-1 overflow-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+            {/* Profile Dialog */}
+            <ProfileDialog />
+
             {/* Admin Broadcast Message */}
             {adminMessage && (
               <Alert className="mb-6 border-2 border-indigo-500 bg-gradient-to-r from-indigo-50 to-purple-50">
@@ -590,8 +718,14 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
             {/* Dashboard View */}
             {activeView === 'dashboard' && (
               <>
-                {/* Daily Quest Card */}
-                {dailyQuest && (
+                {/* ... other dashboard content ... */}
+              </>
+            )}
+            {activeView === 'tasks' && (
+              <div className="space-y-8">
+                {/* Tasks content already added above */}
+              </div>
+            )}
                   <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-400 via-orange-500 to-pink-500 text-white mb-6 overflow-hidden relative">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
                     <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>

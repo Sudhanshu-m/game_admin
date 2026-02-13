@@ -1063,6 +1063,56 @@ app.post("/make-server-2fad19e1/student/task/:taskId/attempt", async (c) => {
   }
 });
 
+// Update student profile
+app.post("/make-server-2fad19e1/student/profile/update", async (c) => {
+  try {
+    const accessToken = c.req.header("Authorization")?.split(" ")[1];
+    if (!accessToken) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const supabase = getSupabaseClient(true);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(accessToken);
+
+    if (error || !user) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const profileData = await c.req.json();
+    const student = await kv.get(`student:${user.id}`);
+    
+    if (!student) {
+      return c.json({ error: "Student not found" }, 404);
+    }
+
+    const updatedStudent = {
+      ...student,
+      ...profileData,
+      id: user.id,
+      email: user.email,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await kv.set(`student:${user.id}`, updatedStudent);
+    
+    // Also update student_profile for EXP/Streak tracking
+    const profileKey = `student_profile:${user.email}`;
+    const existingProfile = await kv.get(profileKey) || {};
+    await kv.set(profileKey, {
+      ...existingProfile,
+      username: profileData.username || existingProfile.username,
+      name: profileData.name || existingProfile.name,
+    });
+
+    return c.json({ success: true, profile: updatedStudent });
+  } catch (error) {
+    console.log("Update student profile error:", error);
+    return c.json({ error: "Failed to update profile: " + error.message }, 500);
+  }
+});
 // Mark notification as read
 app.post(
   "/make-server-2fad19e1/student/notification/:notificationId/read",
@@ -1072,6 +1122,34 @@ app.post(
       if (!accessToken) {
         return c.json({ error: "Unauthorized" }, 401);
       }
+
+      const supabase = getSupabaseClient(true);
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser(accessToken);
+
+      if (error || !user) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+
+      const notificationId = c.req.param("notificationId");
+      const notificationsKey = `notifications:${user.email}`;
+      const notifications = (await kv.get(notificationsKey)) || [];
+
+      const updatedNotifications = notifications.map((n) =>
+        n.id === notificationId ? { ...n, read: true } : n,
+      );
+
+      await kv.set(notificationsKey, updatedNotifications);
+
+      return c.json({ success: true });
+    } catch (error) {
+      console.log("Mark notification read error:", error);
+      return c.json({ error: "Failed to mark as read: " + error.message }, 500);
+    }
+  },
+);
 
       const supabase = getSupabaseClient(true);
       const {
