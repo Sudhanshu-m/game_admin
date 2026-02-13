@@ -491,6 +491,11 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
   );
 
   // Filter tasks into Ongoing and Completed
+  const sortedTasks = [...tasks].sort((a, b) => {
+    if (a.completed !== b.completed) return a.completed ? 1 : -1;
+    return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
+  });
+
   const ongoingTasks = sortedTasks.filter(t => !t.grade);
   const completedTasks = sortedTasks.filter(t => t.grade);
 
