@@ -322,30 +322,8 @@ export function TasksAndQuizzesManagement({
             )}
           </div>
 
-          {/* Statistics */}
+          {/* Statistics - REMOVED Progress Bar and Completion Text */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium">Student Progress</span>
-              </div>
-              <span className="text-sm text-muted-foreground">
-                {stats.completed}/{stats.totalStudents} completed
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Completion Rate</span>
-                <span
-                  className={`font-medium px-2 py-1 rounded ${getStatusColor(stats.completionRate)}`}
-                >
-                  {stats.completionRate}%
-                </span>
-              </div>
-              <Progress value={stats.completionRate} className="h-2" />
-            </div>
-
             {isQuiz && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">

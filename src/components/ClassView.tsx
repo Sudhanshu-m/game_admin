@@ -490,7 +490,7 @@ export function ClassView({ classData, students, onBack, onAddTask, onAddQuiz, a
         )}
       </div>
 
-      {/* Statistics Cards */}
+      {/* Statistics Cards - REMOVED Progress Bars */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-white">
           <CardHeader className="pb-3">
@@ -501,7 +501,6 @@ export function ClassView({ classData, students, onBack, onAddTask, onAddQuiz, a
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-semibold mb-2 text-blue-600">{averageProgress}%</div>
-            <Progress value={averageProgress} className="h-2" />
           </CardContent>
         </Card>
 
@@ -514,7 +513,6 @@ export function ClassView({ classData, students, onBack, onAddTask, onAddQuiz, a
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-semibold mb-2 text-green-600">{averageGrade}%</div>
-            <Progress value={averageGrade} className="h-2" />
           </CardContent>
         </Card>
 
@@ -529,7 +527,6 @@ export function ClassView({ classData, students, onBack, onAddTask, onAddQuiz, a
             <div className="text-3xl font-semibold mb-2 text-purple-600">
               {Math.round((enrolledStudents.length / classData.capacity) * 100)}%
             </div>
-            <Progress value={(enrolledStudents.length / classData.capacity) * 100} className="h-2" />
           </CardContent>
         </Card>
       </div>
