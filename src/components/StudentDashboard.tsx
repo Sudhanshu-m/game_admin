@@ -186,7 +186,7 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
     const currentLevelEXP = totalEXP % 500;
     const nextLevelEXP = 500;
 
-    const completedAssignments = tasksData.filter(t => t.grade || (t.completed && t.grade)).length;
+    const completedAssignments = tasksData.filter(t => t.grade || t.completed).length;
     const totalAssignments = tasksData.length;
 
     setStats({

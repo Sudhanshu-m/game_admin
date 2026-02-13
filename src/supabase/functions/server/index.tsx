@@ -355,7 +355,18 @@ app.get("/make-server-2fad19e1/teacher/data", async (c) => {
     const classes = (await kv.get(`classes:${user.id}`)) || [];
     const tasks = (await kv.get(`tasks:${user.id}`)) || [];
 
-    return c.json({ students, classes, tasks });
+    // Optimize: Pre-calculate completion counts from student tasks
+    const studentTasksPromises = students.map(s => kv.get(`student_tasks:${s.email}`));
+    const allStudentTasks = await Promise.all(studentTasksPromises);
+    
+    // Create a mapping of studentEmail -> completion count
+    const completionMap = {};
+    students.forEach((s, idx) => {
+      const sTasks = allStudentTasks[idx] || [];
+      completionMap[s.email] = sTasks.filter(t => t.completed).length;
+    });
+
+    return c.json({ students, classes, tasks, completionMap });
   } catch (error) {
     console.log("Get data error:", error);
     return c.json({ error: "Failed to get data: " + error.message }, 500);
