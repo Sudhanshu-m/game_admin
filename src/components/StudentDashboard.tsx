@@ -496,8 +496,8 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
     return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
   });
 
-  const ongoingTasks = sortedTasks.filter(t => !t.grade);
-  const completedTasks = sortedTasks.filter(t => t.grade);
+  const ongoingTasks = sortedTasks.filter(t => !t.completed && !t.grade);
+  const completedTasks = sortedTasks.filter(t => t.completed || t.grade);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -866,47 +866,47 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
                         Ongoing Tasks
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <ScrollArea className="h-[300px] sm:h-[350px]">
-                        {sortedTasks.filter(t => !t.completed).length === 0 ? (
-                          <div className="text-center py-12 text-muted-foreground">
-                            <CheckCircle2 className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                            <p className="text-sm">No pending tasks</p>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            {sortedTasks.filter(t => !t.completed).map((task) => (
-                              <div key={task.id} className="p-3 sm:p-4 rounded-lg border bg-white hover:shadow-md transition-shadow">
-                                <div className="flex items-start justify-between mb-2">
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className="font-medium text-sm sm:text-base truncate">{task.title}</h4>
-                                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{task.description}</p>
-                                  </div>
-                                  <Badge className={`${getPriorityColor(task.priority)} border ml-2 text-xs`}>
-                                    {task.priority}
-                                  </Badge>
+                  <CardContent>
+                    <ScrollArea className="h-[300px] sm:h-[350px]">
+                      {ongoingTasks.length === 0 ? (
+                        <div className="text-center py-12 text-muted-foreground">
+                          <CheckCircle2 className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                          <p className="text-sm">No pending tasks</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {ongoingTasks.map((task) => (
+                            <div key={task.id} className="p-3 sm:p-4 rounded-lg border bg-white hover:shadow-md transition-shadow">
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-medium text-sm sm:text-base truncate">{task.title}</h4>
+                                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{task.description}</p>
                                 </div>
-                                <div className="flex items-center justify-between text-xs sm:text-sm mt-3">
-                                  <div className="flex items-center gap-1 text-muted-foreground">
-                                    <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    <span className="text-xs">{new Date(task.dueDate).toLocaleDateString()}</span>
-                                  </div>
-                                  {task.type === 'quiz' && (
-                                    <Button
-                                      size="sm"
-                                      onClick={() => startQuiz(task)}
-                                      className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 h-7 text-xs"
-                                    >
-                                      Start Quiz
-                                    </Button>
-                                  )}
-                                </div>
+                                <Badge className={`${getPriorityColor(task.priority)} border ml-2 text-xs`}>
+                                  {task.priority}
+                                </Badge>
                               </div>
-                            ))}
-                          </div>
-                        )}
-                      </ScrollArea>
-                    </CardContent>
+                              <div className="flex items-center justify-between text-xs sm:text-sm mt-3">
+                                <div className="flex items-center gap-1 text-muted-foreground">
+                                  <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  <span className="text-xs">{new Date(task.dueDate).toLocaleDateString()}</span>
+                                </div>
+                                {task.type === 'quiz' && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => startQuiz(task)}
+                                    className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 h-7 text-xs"
+                                  >
+                                    Start Quiz
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </CardContent>
                   </Card>
 
                   {/* Recently Assigned Grades */}
@@ -1161,16 +1161,6 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
                                 >
                                   <Clock className="w-4 h-4 mr-2" />
                                   Start Quiz
-                                </Button>
-                              )}
-                              {!task.completed && task.type !== 'quiz' && (
-                                <Button
-                                  onClick={() => markTaskAttempted(task.id)}
-                                  variant="outline"
-                                  className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 w-full sm:w-auto"
-                                >
-                                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                                  Mark Attempted
                                 </Button>
                               )}
                             </div>
