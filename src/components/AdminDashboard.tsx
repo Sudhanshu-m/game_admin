@@ -530,7 +530,7 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
       case 'portal-students':
         return (
           <RegisteredStudentsList
-            students={registeredStudents}
+            students={filteredStudents}
             onBack={() => setActiveView('dashboard')}
             onSelectStudent={(student) => {
               setSelectedStudent(student);
