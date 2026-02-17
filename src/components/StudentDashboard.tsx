@@ -496,8 +496,15 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
     return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
   });
 
-  const ongoingTasks = sortedTasks.filter(t => !t.completed && !t.grade);
-  const completedTasks = sortedTasks.filter(t => t.completed || t.grade);
+  const ongoingTasks = sortedTasks.filter(t => {
+    const isGraded = grades.some(g => g.taskId === t.id);
+    return !t.completed && !isGraded;
+  });
+
+  const completedTasks = sortedTasks.filter(t => {
+    const isGraded = grades.some(g => g.taskId === t.id);
+    return t.completed || isGraded;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
