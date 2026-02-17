@@ -145,7 +145,10 @@ export function StudentApp({ onBackToLanding }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${publicAnonKey}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          role: 'student'
+        })
       });
 
       const data = await response.json();

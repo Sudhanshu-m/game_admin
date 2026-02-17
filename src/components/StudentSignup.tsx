@@ -14,6 +14,7 @@ export function StudentSignup({ onSignup, onSwitchToLogin }) {
     email: '',
     rollNumber: '',
     batch: '',
+    class: '',
     password: '',
     confirmPassword: ''
   });
@@ -48,6 +49,11 @@ export function StudentSignup({ onSignup, onSwitchToLogin }) {
       return;
     }
 
+    if (!formData.class) {
+      toast.error('Please select your class');
+      return;
+    }
+
     if (formData.password.length < 6) {
       toast.error('Password must be at least 6 characters long');
       return;
@@ -66,6 +72,7 @@ export function StudentSignup({ onSignup, onSwitchToLogin }) {
         email: formData.email.trim(),
         rollNumber: formData.rollNumber.trim(),
         batch: formData.batch,
+        class: formData.class,
         password: formData.password
       });
     } catch (error) {
@@ -160,25 +167,55 @@ export function StudentSignup({ onSignup, onSwitchToLogin }) {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="batch" className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Batch
-                </Label>
-                <Select
-                  value={formData.batch}
-                  onValueChange={(value) => setFormData({...formData, batch: value})}
-                >
-                  <SelectTrigger id="batch" className="h-11">
-                    <SelectValue placeholder="Select your batch" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="I BDS">I BDS (1st Year)</SelectItem>
-                    <SelectItem value="II BDS">II BDS (2nd Year)</SelectItem>
-                    <SelectItem value="III BDS">III BDS (3rd Year)</SelectItem>
-                    <SelectItem value="IV BDS">IV BDS (4th Year)</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="batch" className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Batch
+                  </Label>
+                  <Select
+                    value={formData.batch}
+                    onValueChange={(value) => setFormData({...formData, batch: value})}
+                  >
+                    <SelectTrigger id="batch" className="h-11">
+                      <SelectValue placeholder="Batch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="I BDS">I BDS</SelectItem>
+                      <SelectItem value="II BDS">II BDS</SelectItem>
+                      <SelectItem value="III BDS">III BDS</SelectItem>
+                      <SelectItem value="IV BDS">IV BDS</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="class" className="flex items-center gap-2">
+                    <School className="w-4 h-4" />
+                    Class
+                  </Label>
+                  <Select
+                    value={formData.class}
+                    onValueChange={(value) => setFormData({...formData, class: value})}
+                  >
+                    <SelectTrigger id="class" className="h-11">
+                      <SelectValue placeholder="Class" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Oral Anatomy">Oral Anatomy</SelectItem>
+                      <SelectItem value="Dental Materials">Dental Materials</SelectItem>
+                      <SelectItem value="Oral Pathology">Oral Pathology</SelectItem>
+                      <SelectItem value="Pharmacology">Pharmacology</SelectItem>
+                      <SelectItem value="General Surgery">General Surgery</SelectItem>
+                      <SelectItem value="General Medicine">General Medicine</SelectItem>
+                      <SelectItem value="Oral Surgery">Oral Surgery</SelectItem>
+                      <SelectItem value="Prosthodontics">Prosthodontics</SelectItem>
+                      <SelectItem value="Orthodontics">Orthodontics</SelectItem>
+                      <SelectItem value="Periodontics">Periodontics</SelectItem>
+                      <SelectItem value="Pedodontics">Pedodontics</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="space-y-2">

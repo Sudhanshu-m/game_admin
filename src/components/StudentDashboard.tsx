@@ -385,7 +385,6 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
 
       if (response.ok) {
         toast.success('Profile updated successfully!');
-        setIsProfileDialogOpen(false);
         loadStudentData();
       } else {
         toast.error('Failed to update profile');
@@ -398,96 +397,136 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
     }
   };
 
-  // Profile Dialog Component
-  const ProfileDialog = () => (
-    <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl flex items-center gap-2">
-            <User className="w-6 h-6 text-indigo-600" />
-            My Profile
-          </DialogTitle>
-          <DialogDescription>
-            Update your profile information and account settings
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleUpdateProfile} className="space-y-6 py-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                value={profileData.name}
-                onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                placeholder="Enter your full name"
-              />
+  // Profile View Component
+  const ProfileView = () => (
+    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <User className="w-7 h-7 text-indigo-600" />
+          My Profile
+        </h2>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Avatar and Stats */}
+        <Card className="lg:col-span-1 border-0 shadow-lg overflow-hidden">
+          <div className="h-32 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+          <CardContent className="relative pt-12 text-center">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+              <Avatar className="w-24 h-24 border-4 border-white shadow-xl">
+                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-2xl">
+                  {student.username?.slice(0, 2).toUpperCase() || student.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                value={profileData.username}
-                onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
-                placeholder="Choose a username"
-              />
+            <h3 className="text-xl font-bold text-gray-900">{student.name}</h3>
+            <p className="text-sm text-muted-foreground mb-4">@{student.username}</p>
+            
+            <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase font-semibold">Level</p>
+                <p className="text-lg font-bold text-indigo-600">{stats.level}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground uppercase font-semibold">Total EXP</p>
+                <p className="text-lg font-bold text-purple-600">{stats.totalEXP}</p>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                value={profileData.email}
-                disabled
-                className="bg-gray-50"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="rollNumber">Roll Number</Label>
-              <Input
-                id="rollNumber"
-                value={profileData.rollNumber}
-                disabled
-                className="bg-gray-50"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="batch">Batch</Label>
-              <Input
-                id="batch"
-                value={profileData.batch}
-                onChange={(e) => setProfileData({ ...profileData, batch: e.target.value })}
-                placeholder="e.g. 2022-2026"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                value={profileData.phone}
-                onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                placeholder="Enter phone number"
-              />
-            </div>
-          </div>
-          <Separator />
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsProfileDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isUpdatingProfile}
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
-            >
-              {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+          </CardContent>
+        </Card>
+
+        {/* Right Column - Details and Edit */}
+        <Card className="lg:col-span-2 border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Settings className="w-5 h-5 text-indigo-600" />
+              Account Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleUpdateProfile} className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input
+                    id="name"
+                    value={profileData.name}
+                    onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                    className="focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    value={profileData.username}
+                    onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
+                    className="focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    value={profileData.email}
+                    disabled
+                    className="bg-gray-50 text-muted-foreground"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="rollNumber">Roll Number</Label>
+                  <Input
+                    id="rollNumber"
+                    value={profileData.rollNumber}
+                    disabled
+                    className="bg-gray-50 text-muted-foreground"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="batch">Batch</Label>
+                  <Input
+                    id="batch"
+                    value={profileData.batch}
+                    onChange={(e) => setProfileData({ ...profileData, batch: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="class">Class</Label>
+                  <Input
+                    id="class"
+                    value={profileData.class}
+                    onChange={(e) => setProfileData({ ...profileData, class: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    value={profileData.phone}
+                    onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end pt-4">
+                <Button
+                  type="submit"
+                  disabled={isUpdatingProfile}
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md px-8"
+                >
+                  {isUpdatingProfile ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Saving...
+                    </div>
+                  ) : 'Save Changes'}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 
   // Filter tasks into Ongoing and Completed
@@ -652,9 +691,6 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
                     key={item.id}
                     onClick={() => {
                       setActiveView(item.id);
-                      if (item.id === 'profile') {
-                        setIsProfileDialogOpen(true);
-                      }
                       setIsSidebarOpen(false);
                     }}
                     className={`
@@ -698,11 +734,11 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
         {/* Main Content */}
         <div className="flex-1 overflow-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-            {/* Profile Dialog */}
-            <ProfileDialog />
+            {/* Profile Content if active */}
+            {activeView === 'profile' && <ProfileView />}
 
-            {/* Admin Broadcast Message */}
-            {adminMessage && (
+            {/* Admin Broadcast Message - only show on dashboard */}
+            {activeView === 'dashboard' && adminMessage && (
               <Alert className="mb-6 border-2 border-indigo-500 bg-gradient-to-r from-indigo-50 to-purple-50">
                 <MessageSquare className="h-5 w-5 text-indigo-600" />
                 <AlertDescription className="ml-2">

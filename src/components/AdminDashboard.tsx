@@ -454,6 +454,15 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
     toast.success('Class deleted successfully');
   };
 
+  const [selectedBatch, setSelectedBatch] = useState('All');
+  const [selectedClassName, setSelectedClassName] = useState('All');
+
+  const filteredStudents = registeredStudents.filter(student => {
+    const batchMatch = selectedBatch === 'All' || student.batch === selectedBatch;
+    const classMatch = selectedClassName === 'All' || student.class === selectedClassName;
+    return batchMatch && classMatch;
+  });
+
   const renderContent = () => {
     // Combine manually added students with registered students
     const allStudents = [...students, ...registeredStudents];
@@ -461,20 +470,62 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
     switch (activeView) {
       case 'students':
         return (
-          <StudentsList 
-            onSelectStudent={(student) => {
-              setSelectedStudent(student);
-              // Route portal students to assign view
-              if (student.isRegistered) {
-                setActiveView('assign-student');
-              } else {
-                setActiveView('profile');
-              }
-            }}
-            students={registeredStudents}
-            classes={classes}
-            onRefresh={loadRegisteredStudents}
-          />
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border">
+              <div className="flex-1">
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Filter by Batch</Label>
+                <Select value={selectedBatch} onValueChange={setSelectedBatch}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Batch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Batches</SelectItem>
+                    <SelectItem value="I BDS">I BDS</SelectItem>
+                    <SelectItem value="II BDS">II BDS</SelectItem>
+                    <SelectItem value="III BDS">III BDS</SelectItem>
+                    <SelectItem value="IV BDS">IV BDS</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1">
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Filter by Class</Label>
+                <Select value={selectedClassName} onValueChange={setSelectedClassName}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Classes</SelectItem>
+                    <SelectItem value="Oral Anatomy">Oral Anatomy</SelectItem>
+                    <SelectItem value="Dental Materials">Dental Materials</SelectItem>
+                    <SelectItem value="Oral Pathology">Oral Pathology</SelectItem>
+                    <SelectItem value="Pharmacology">Pharmacology</SelectItem>
+                    <SelectItem value="General Surgery">General Surgery</SelectItem>
+                    <SelectItem value="General Medicine">General Medicine</SelectItem>
+                    <SelectItem value="Oral Surgery">Oral Surgery</SelectItem>
+                    <SelectItem value="Prosthodontics">Prosthodontics</SelectItem>
+                    <SelectItem value="Orthodontics">Orthodontics</SelectItem>
+                    <SelectItem value="Periodontics">Periodontics</SelectItem>
+                    <SelectItem value="Pedodontics">Pedodontics</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <StudentsList 
+              onSelectStudent={(student) => {
+                setSelectedStudent(student);
+                // Route portal students to assign view
+                if (student.isRegistered) {
+                  setActiveView('assign-student');
+                } else {
+                  setActiveView('profile');
+                }
+              }}
+              students={filteredStudents}
+              classes={classes}
+              onRefresh={loadRegisteredStudents}
+            />
+          </div>
         );
       case 'portal-students':
         return (
