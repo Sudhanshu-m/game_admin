@@ -293,6 +293,7 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'students', label: 'Students', icon: Users },
+    { id: 'portal-students', label: 'Portal Students', icon: UserPlus },
     { id: 'classes', label: 'Classes', icon: School },
     { id: 'tasks-quizzes', label: 'Tasks & Quizzes', icon: ListTodo },
     { id: 'marks', label: 'Marks Management', icon: BookOpen },

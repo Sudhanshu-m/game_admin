@@ -187,7 +187,7 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
     const nextLevelEXP = 500;
 
     // Only count as completed if it has a grade assigned by teacher
-    const completedAssignments = tasksData.filter(t => t.grade).length;
+    const completedAssignments = tasksData.filter(t => t.grade || gradesData.some(g => g.taskId === t.id || g.task_id === t.id)).length;
     const totalAssignments = tasksData.length;
 
     setStats({
@@ -536,12 +536,12 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
   });
 
   const ongoingTasks = sortedTasks.filter(t => {
-    const isGraded = grades.some(g => g.taskId === t.id);
+    const isGraded = grades.some(g => g.taskId === t.id || g.task_id === t.id);
     return !t.completed && !isGraded;
   });
 
   const completedTasks = sortedTasks.filter(t => {
-    const isGraded = grades.some(g => g.taskId === t.id);
+    const isGraded = grades.some(g => g.taskId === t.id || g.task_id === t.id);
     return t.completed || isGraded;
   });
 
