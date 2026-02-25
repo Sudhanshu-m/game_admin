@@ -31,6 +31,8 @@ import {
   ListTodo,
   Sparkles
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Label } from './ui/label';
 import { toast } from 'sonner@2.0.3';
 import { projectId } from '../utils/supabase/info';
 
