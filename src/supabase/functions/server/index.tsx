@@ -9,11 +9,21 @@ const app = new Hono();
 // Enable logger
 app.use("*", logger(console.log));
 
-// Enable CORS for all routes and methods with proper OPTIONS handling
+// Explicitly handle OPTIONS requests for CORS preflight
+app.options("*", (c) => {
+  return c.text("", 204, {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, apikey, x-client-info",
+    "Access-Control-Max-Age": "86400",
+  });
+});
+
 app.use(
-  "/*",
+  "*",
   cors({
     origin: "*",
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
     allowHeaders: [
       "Content-Type",
       "Authorization",
@@ -21,24 +31,11 @@ app.use(
       "apikey",
       "x-client-info",
     ],
-    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
-    exposeHeaders: ["Content-Length", "Content-Type"],
+    exposeHeaders: ["Content-Length", "X-JSON"],
     maxAge: 86400,
     credentials: true,
   }),
 );
-
-// Explicitly handle OPTIONS requests
-app.options("/*", (c) => {
-  return c.text("", 204, {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods":
-      "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD",
-    "Access-Control-Allow-Headers":
-      "Content-Type, Authorization, X-Client-Info, apikey, x-client-info",
-    "Access-Control-Max-Age": "86400",
-  });
-});
 
 // Create Supabase client for auth
 const getSupabaseClient = (serviceRole = false) => {
