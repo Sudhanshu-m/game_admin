@@ -191,6 +191,11 @@ app.get("/make-server-2fad19e1/health", (c) => {
   return c.json({ status: "ok" });
 });
 
+// Root health check for Supabase
+app.get("/", (c) => {
+  return c.json({ status: "ok", message: "Dental College API is running" });
+});
+
 // Sign up endpoint
 app.post("/make-server-2fad19e1/signup", async (c) => {
   try {
