@@ -189,7 +189,12 @@ export function TasksAndQuizzesManagement({
     return new Date(dueDate) < new Date();
   };
 
-  const allTasks = tasks || [];
+  const allTasks = [...(tasks || [])].sort((a, b) => {
+    // Sort by id (which contains timestamp) or createdAt newest first
+    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : parseInt(a.id.split('-')[1]) || 0;
+    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : parseInt(b.id.split('-')[1]) || 0;
+    return timeB - timeA;
+  });
   const regularTasks = allTasks.filter((t) => t.type !== "quiz");
   const quizzes = allTasks.filter((t) => t.type === "quiz");
 

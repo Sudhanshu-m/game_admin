@@ -158,384 +158,351 @@ export function StudentProfile({ student, onBack, classes, onUpdateStudentClass 
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <Button onClick={onBack} variant="ghost" className="mb-4">
+      {/* Header with gradient to match Admin Settings */}
+      <div className="mb-6 p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl text-white shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-10">
+          <GraduationCap className="w-32 h-32" />
+        </div>
+        
+        <Button onClick={onBack} variant="ghost" className="mb-6 text-white hover:bg-white/20 -ml-2">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Students
         </Button>
         
-        <div className="flex items-start gap-6">
-          <Avatar className="w-20 h-20">
-            <AvatarImage src={studentDetails.avatarUrl} />
-            <AvatarFallback className="text-lg">{studentDetails.avatar}</AvatarFallback>
-          </Avatar>
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+          <div className="relative">
+            <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl">
+              <AvatarImage src={studentDetails.avatarUrl} />
+              <AvatarFallback className="text-2xl bg-white text-indigo-600 font-bold">
+                {studentDetails.name.split(' ').map(n => n[0]).join('')}
+              </AvatarFallback>
+            </Avatar>
+            <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1.5 shadow-lg">
+              <div className="bg-indigo-100 rounded-full p-1">
+                <Trophy className="w-4 h-4 text-indigo-600" />
+              </div>
+            </div>
+          </div>
           
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold mb-2">{studentDetails.name}</h1>
-            <p className="text-muted-foreground mb-4">{studentDetails.email}</p>
+          <div className="flex-1 text-center md:text-left">
+            <h1 className="text-3xl font-bold mb-1">{studentDetails.name}</h1>
+            <p className="text-white/80 mb-4">{studentDetails.email}</p>
             
-            <div className="flex flex-wrap gap-4 mb-4">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-yellow-500" />
-                <span>Level {studentDetails.currentLevel}</span>
+            <div className="flex flex-wrap justify-center md:justify-start gap-4 mb-4">
+              <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                <Star className="w-4 h-4 text-yellow-300 fill-yellow-300" />
+                <span className="font-medium">Level {studentDetails.currentLevel}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Star className="w-4 h-4 text-blue-500" />
-                <span>{studentDetails.totalPoints} Points</span>
+              <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                <Award className="w-4 h-4 text-blue-300" />
+                <span className="font-medium">{studentDetails.totalPoints} XP</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Target className="w-4 h-4 text-green-500" />
-                <span>{studentDetails.gameProgress}% Complete</span>
+              <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                <TrendingUp className="w-4 h-4 text-emerald-300" />
+                <span className="font-medium">{studentDetails.gameProgress}% Course Progress</span>
               </div>
             </div>
             
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap justify-center md:justify-start gap-2">
               {studentDetails.subjects.map((subject, index) => (
-                <Badge key={index} variant="secondary">
+                <Badge key={index} variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-0">
                   {subject}
                 </Badge>
               ))}
             </div>
           </div>
         </div>
-
-        {/* Class Assignment Section */}
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-white mt-6">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <School className="w-4 h-4 text-blue-500" />
-                <span>Class Assignment</span>
-              </div>
-              {!isEditingClass && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setIsEditingClass(true)}
-                  className="h-8"
-                >
-                  <Edit className="w-3 h-3 mr-1" />
-                  Change Class
-                </Button>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isEditingClass ? (
-              <div className="space-y-3">
-                <Select value={selectedClass} onValueChange={setSelectedClass}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a class" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[400px]">
-                    {Object.entries(classesByYear).map(([year, yearClasses]) => (
-                      <React.Fragment key={year}>
-                        <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground bg-muted/50">
-                          {year}
-                        </div>
-                        {yearClasses.map((classItem) => (
-                          <SelectItem key={classItem.id} value={classItem.id}>
-                            {classItem.subject}
-                          </SelectItem>
-                        ))}
-                      </React.Fragment>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleClassUpdate}
-                    className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0"
-                    size="sm"
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsEditingClass(false);
-                      setSelectedClass(student.classId);
-                    }}
-                    size="sm"
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                <div>
-                  <p className="font-medium text-sm">{studentDetails.className}</p>
-                  <p className="text-xs text-muted-foreground">Current Class</p>
-                </div>
-                <Badge className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0">
-                  Enrolled
-                </Badge>
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="game-progress">Game Progress</TabsTrigger>
-          <TabsTrigger value="grades">Grades</TabsTrigger>
-          <TabsTrigger value="achievements">Achievements</TabsTrigger>
-        </TabsList>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Stats & Class */}
+        <div className="space-y-6">
+          {/* Class Assignment Card */}
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-indigo-50 to-white overflow-hidden">
+            <div className="h-2 bg-indigo-500" />
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <School className="w-5 h-5 text-indigo-600" />
+                  <span>Class Assignment</span>
+                </div>
+                {!isEditingClass && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setIsEditingClass(true)}
+                    className="h-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100/50"
+                  >
+                    <Edit className="w-3.5 h-3.5 mr-1.5" />
+                    Edit
+                  </Button>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEditingClass ? (
+                <div className="space-y-3">
+                  <Select value={selectedClass} onValueChange={setSelectedClass}>
+                    <SelectTrigger className="border-indigo-200 focus:ring-indigo-500">
+                      <SelectValue placeholder="Select a class" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[400px]">
+                      {Object.entries(classesByYear).map(([year, yearClasses]) => (
+                        <React.Fragment key={year}>
+                          <div className="px-2 py-1.5 text-xs font-bold text-indigo-600 uppercase tracking-wider bg-indigo-50/50">
+                            {year}
+                          </div>
+                          {yearClasses.map((classItem) => (
+                            <SelectItem key={classItem.id} value={classItem.id}>
+                              {classItem.subject}
+                            </SelectItem>
+                          ))}
+                        </React.Fragment>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleClassUpdate}
+                      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white border-0"
+                      size="sm"
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsEditingClass(false);
+                        setSelectedClass(student.classId);
+                      }}
+                      size="sm"
+                      className="flex-1 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-white rounded-xl border border-indigo-100 shadow-sm flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-indigo-900">{studentDetails.className}</p>
+                    <p className="text-xs text-indigo-500 font-medium uppercase tracking-tight">Active Enrollment</p>
+                  </div>
+                  <div className="bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full text-xs font-bold">
+                    VERIFIED
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-        <TabsContent value="overview" className="space-y-6">
-          {/* Real-time Student Performance Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="border-0 bg-gradient-to-br from-pink-50 to-rose-100 shadow-lg">
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="border-0 bg-gradient-to-br from-rose-50 to-white shadow-md">
               <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-1 bg-pink-500 rounded-full">
-                    <Flame className="w-3 h-3 text-white" />
-                  </div>
-                  <span className="text-sm text-pink-700">Current Streak</span>
+                <div className="bg-rose-100 w-8 h-8 rounded-lg flex items-center justify-center mb-3">
+                  <Flame className="w-5 h-5 text-rose-600" />
                 </div>
-                {isLoadingData ? (
-                  <p className="text-2xl font-bold text-pink-800">...</p>
-                ) : (
-                  <>
-                    <p className="text-2xl font-bold text-pink-800">{streakData.currentStreak} days</p>
-                    <p className="text-xs text-pink-600 mt-1">Best: {streakData.longestStreak} days</p>
-                  </>
-                )}
+                <p className="text-2xl font-bold text-rose-900">{streakData?.currentStreak || 0}</p>
+                <p className="text-xs font-medium text-rose-600 uppercase">Day Streak</p>
               </CardContent>
             </Card>
-            
-            <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-100 shadow-lg">
+            <Card className="border-0 bg-gradient-to-br from-emerald-50 to-white shadow-md">
               <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-1 bg-green-500 rounded-full">
-                    <CheckCircle2 className="w-3 h-3 text-white" />
-                  </div>
-                  <span className="text-sm text-green-700">Tasks Completed</span>
+                <div className="bg-emerald-100 w-8 h-8 rounded-lg flex items-center justify-center mb-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 </div>
-                {isLoadingData ? (
-                  <p className="text-2xl font-bold text-green-800">...</p>
-                ) : (
-                  <>
-                    <p className="text-2xl font-bold text-green-800">{taskData.completedCount}/{taskData.totalCount}</p>
-                    <p className="text-xs text-green-600 mt-1">
-                      {taskData.totalCount > 0 
-                        ? `${Math.round((taskData.completedCount / taskData.totalCount) * 100)}% completion rate`
-                        : 'No tasks assigned yet'}
-                    </p>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-            
-            <Card className="border-0 bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-1 bg-blue-500 rounded-full">
-                    <ListTodo className="w-3 h-3 text-white" />
-                  </div>
-                  <span className="text-sm text-blue-700">Total Tasks</span>
-                </div>
-                {isLoadingData ? (
-                  <p className="text-2xl font-bold text-blue-800">...</p>
-                ) : (
-                  <>
-                    <p className="text-2xl font-bold text-blue-800">{taskData.totalCount}</p>
-                    <p className="text-xs text-blue-600 mt-1">
-                      {taskData.totalCount - taskData.completedCount} pending
-                    </p>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-            
-            <Card className="border-0 bg-gradient-to-br from-purple-50 to-purple-100 shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-1 bg-purple-500 rounded-full">
-                    <Calendar className="w-3 h-3 text-white" />
-                  </div>
-                  <span className="text-sm text-purple-700">Active Days</span>
-                </div>
-                {isLoadingData ? (
-                  <p className="text-2xl font-bold text-purple-800">...</p>
-                ) : (
-                  <>
-                    <p className="text-2xl font-bold text-purple-800">{streakData.dates?.length || 0}</p>
-                    <p className="text-xs text-purple-600 mt-1">Last 365 days</p>
-                  </>
-                )}
+                <p className="text-2xl font-bold text-emerald-900">{taskData?.completedCount || 0}</p>
+                <p className="text-xs font-medium text-emerald-600 uppercase">Completed</p>
               </CardContent>
             </Card>
           </div>
+        </div>
 
-          {/* Streak Information Card */}
-          {!isLoadingData && streakData.currentStreak > 0 && (
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 via-pink-50 to-rose-50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Flame className="w-5 h-5 text-orange-500" />
-                  Consistency Tracker
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-white rounded-lg border-2 border-orange-200">
-                    <Flame className="w-8 h-8 mx-auto mb-2 text-orange-500" />
-                    <p className="text-3xl font-bold text-orange-600">{streakData.currentStreak}</p>
-                    <p className="text-sm text-muted-foreground">Current Streak</p>
-                  </div>
-                  <div className="text-center p-4 bg-white rounded-lg border-2 border-pink-200">
-                    <Trophy className="w-8 h-8 mx-auto mb-2 text-pink-500" />
-                    <p className="text-3xl font-bold text-pink-600">{streakData.longestStreak}</p>
-                    <p className="text-sm text-muted-foreground">Longest Streak</p>
-                  </div>
-                  <div className="text-center p-4 bg-white rounded-lg border-2 border-rose-200">
-                    <Calendar className="w-8 h-8 mx-auto mb-2 text-rose-500" />
-                    <p className="text-3xl font-bold text-rose-600">{streakData.dates?.length || 0}</p>
-                    <p className="text-sm text-muted-foreground">Active Days</p>
-                  </div>
-                </div>
-                {streakData.lastActivityDate && (
-                  <p className="text-sm text-center text-muted-foreground mt-4">
-                    Last activity: {new Date(streakData.lastActivityDate).toLocaleDateString()}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          )}
+        {/* Right Column: Main Content Tabs */}
+        <div className="lg:col-span-2">
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="w-full justify-start h-auto p-1 bg-muted/50 rounded-xl mb-6">
+              <TabsTrigger value="overview" className="rounded-lg px-6 py-2.5">Overview</TabsTrigger>
+              <TabsTrigger value="game-progress" className="rounded-lg px-6 py-2.5">Game Stats</TabsTrigger>
+              <TabsTrigger value="grades" className="rounded-lg px-6 py-2.5">Grades</TabsTrigger>
+              <TabsTrigger value="achievements" className="rounded-lg px-6 py-2.5">Badges</TabsTrigger>
+            </TabsList>
 
-          {/* Tasks Overview Card */}
-          {!isLoadingData && taskData.tasks.length > 0 && (
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ListTodo className="w-5 h-5 text-indigo-600" />
-                  Recent Tasks
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {taskData.tasks.slice(0, 5).map((task, index) => (
-                    <div 
-                      key={index} 
-                      className={`p-3 rounded-lg border ${
-                        task.completed 
-                          ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' 
-                          : 'bg-white border-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className={`font-medium text-sm ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
-                              {task.title}
-                            </h4>
-                            {task.completed && (
-                              <CheckCircle2 className="w-4 h-4 text-green-600" />
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">{task.description}</p>
-                          <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <BookOpen className="w-3 h-3" />
-                              {task.subject}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {new Date(task.dueDate).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-                        <Badge 
-                          className={`ml-2 ${
-                            task.completed 
-                              ? 'bg-green-500' 
-                              : task.priority === 'high' 
-                                ? 'bg-red-500' 
-                                : task.priority === 'medium' 
-                                  ? 'bg-yellow-500' 
-                                  : 'bg-blue-500'
-                          } text-white border-0`}
-                        >
-                          {task.type || 'task'}
-                        </Badge>
-                      </div>
+            <TabsContent value="overview" className="space-y-6 animate-in fade-in duration-300">
+              {/* Detailed Metrics */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="border-0 shadow-lg bg-white overflow-hidden">
+                  <CardHeader className="border-b bg-slate-50/50 pb-3">
+                    <CardTitle className="text-sm font-bold flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-blue-500" />
+                      Activity Summary
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-sm text-muted-foreground">Total XP Earned</span>
+                      <span className="font-bold">{studentDetails.totalPoints}</span>
                     </div>
-                  ))}
-                </div>
-                {taskData.tasks.length > 5 && (
-                  <p className="text-sm text-center text-muted-foreground mt-3">
-                    +{taskData.tasks.length - 5} more tasks
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Skill Progress</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {studentDetails.skillProgress.map((skill, index) => (
-                <div key={index}>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium">{skill.skill}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">
-                        Level {skill.level}/{skill.maxLevel}
-                      </span>
-                      <span className="text-sm font-medium">{skill.progress}%</span>
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-sm text-muted-foreground">Active Days</span>
+                      <span className="font-bold">{streakData.dates?.length || 0}</span>
                     </div>
-                  </div>
-                  <Progress value={skill.progress} className="h-2" />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Time Invested</span>
+                      <span className="font-bold">{studentDetails.gameStats.timeSpent}</span>
+                    </div>
+                  </CardContent>
+                </Card>
 
-        <TabsContent value="game-progress" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Overall Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span>Course Completion</span>
-                    <span className="font-medium">{studentDetails.gameProgress}%</span>
-                  </div>
-                  <Progress value={studentDetails.gameProgress} className="h-3" />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 mt-6">
-                  <div className="text-center p-4 bg-muted rounded-lg">
-                    <p className="text-2xl font-bold text-green-600">{studentDetails.gameStats.gamesWon}</p>
-                    <p className="text-sm text-muted-foreground">Games Won</p>
-                  </div>
-                  <div className="text-center p-4 bg-muted rounded-lg">
-                    <p className="text-2xl font-bold text-blue-600">{studentDetails.gameStats.streakBest}</p>
-                    <p className="text-sm text-muted-foreground">Best Streak</p>
-                  </div>
-                </div>
+                <Card className="border-0 shadow-lg bg-white overflow-hidden">
+                  <CardHeader className="border-b bg-slate-50/50 pb-3">
+                    <CardTitle className="text-sm font-bold flex items-center gap-2">
+                      <Target className="w-4 h-4 text-rose-500" />
+                      Task Completion
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-end mb-2">
+                      <span className="text-3xl font-bold">{Math.round((taskData.completedCount / Math.max(1, taskData.totalCount)) * 100)}%</span>
+                      <span className="text-sm text-muted-foreground mb-1">{taskData.completedCount} / {taskData.totalCount} Tasks</span>
+                    </div>
+                    <Progress value={(taskData.completedCount / Math.max(1, taskData.totalCount)) * 100} className="h-2 bg-slate-100" />
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        <TabsContent value="grades" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Assignments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+              {/* Recent Tasks List */}
+              <Card className="border-0 shadow-lg bg-white">
+                <CardHeader className="border-b bg-slate-50/50">
+                  <CardTitle className="text-sm font-bold flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ListTodo className="w-4 h-4 text-indigo-600" />
+                      Recent Activity
+                    </div>
+                    <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider">Last 5 Assignments</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="divide-y">
+                    {taskData.tasks.length > 0 ? (
+                      taskData.tasks.slice(0, 5).map((task, index) => (
+                        <div key={index} className="p-4 hover:bg-slate-50/50 transition-colors flex items-center justify-between group">
+                          <div className="flex items-start gap-4">
+                            <div className={`mt-1 p-2 rounded-lg ${task.completed ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                              {task.completed ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+                            </div>
+                            <div>
+                              <h4 className={`text-sm font-bold ${task.completed ? 'text-slate-500 line-through' : 'text-slate-900'}`}>
+                                {task.title}
+                              </h4>
+                              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{task.description}</p>
+                              <div className="flex items-center gap-3 mt-2">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {new Date(task.dueDate).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <Badge variant={task.completed ? "secondary" : "default"} className={`text-[10px] ${!task.completed && 'bg-indigo-600'}`}>
+                            {task.type || 'TASK'}
+                          </Badge>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-8 text-center">
+                        <p className="text-sm text-muted-foreground">No recent activity found</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            {/* Other tabs remain largely the same but with minor styling updates */}
+            <TabsContent value="game-progress" className="animate-in fade-in duration-300">
+              <Card className="border-0 shadow-lg bg-white">
+                <CardHeader className="border-b bg-slate-50/50">
+                  <CardTitle className="text-sm font-bold">Game Statistics</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                    <div className="text-center p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                      <p className="text-3xl font-black text-indigo-600">{studentDetails.gameStats.gamesWon}</p>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Games Won</p>
+                    </div>
+                    <div className="text-center p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                      <p className="text-3xl font-black text-orange-600">{studentDetails.gameStats.streakBest}</p>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Best Streak</p>
+                    </div>
+                    <div className="text-center p-6 bg-slate-50 rounded-2xl border border-slate-100 col-span-2 md:col-span-1">
+                      <p className="text-3xl font-black text-blue-600">{studentDetails.gameStats.winRate}%</p>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Win Rate</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="grades" className="animate-in fade-in duration-300">
+              <Card className="border-0 shadow-lg bg-white">
+                <CardHeader className="border-b bg-slate-50/50">
+                  <CardTitle className="text-sm font-bold">Academic Performance</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="divide-y">
+                    {studentDetails.recentGrades.map((grade, index) => (
+                      <div key={index} className="p-4 flex items-center justify-between">
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900">{grade.assignment}</h4>
+                          <p className="text-xs text-muted-foreground">{grade.subject}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-lg font-black ${getGradeColor(grade.score)}`}>
+                            {grade.score}/{grade.maxScore}
+                          </p>
+                          <p className="text-[10px] font-bold text-slate-400">{new Date(grade.date).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="achievements" className="animate-in fade-in duration-300">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {studentDetails.gameStats.achievements.map((achievement) => (
+                  <Card key={achievement.id} className={`border-0 shadow-md transition-all ${achievement.unlocked ? 'bg-white opacity-100' : 'bg-slate-50/50 opacity-60'}`}>
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className={`p-3 rounded-2xl ${achievement.unlocked ? 'bg-amber-100 text-amber-600' : 'bg-slate-200 text-slate-400'}`}>
+                        <Award className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-bold text-slate-900">{achievement.name}</h4>
+                        <p className="text-xs text-muted-foreground leading-tight">{achievement.description}</p>
+                        {!achievement.unlocked && achievement.progress && (
+                          <div className="mt-2">
+                            <Progress value={(achievement.progress / 5) * 100} className="h-1" />
+                          </div>
+                        )}
+                      </div>
+                      {achievement.unlocked && (
+                        <div className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                          UNLOCKED
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </div>
+  );
+}
                 {studentDetails.recentGrades.map((grade, index) => (
                   <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>

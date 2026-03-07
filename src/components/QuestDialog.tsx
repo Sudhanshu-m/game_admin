@@ -68,16 +68,16 @@ export function QuestDialog({ isOpen, onClose, accessToken, projectId, classes }
         <DialogHeader>
           <DialogTitle className="text-2xl bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-amber-600" />
-            Assign Quest of the Day
+            Assign Task of the Day
           </DialogTitle>
           <DialogDescription>
-            Create a special quest that will appear on all students' dashboards today.
+            Create a special task that will appear on all students' dashboards today.
           </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div>
-            <Label htmlFor="quest-title">Quest Title</Label>
+            <Label htmlFor="quest-title">Task Title</Label>
             <Input
               id="quest-title"
               placeholder="e.g., Master the Root Canal Technique"
@@ -89,7 +89,7 @@ export function QuestDialog({ isOpen, onClose, accessToken, projectId, classes }
           </div>
 
           <div>
-            <Label htmlFor="quest-description">Quest Description</Label>
+            <Label htmlFor="quest-description">Task Description</Label>
             <Textarea
               id="quest-description"
               placeholder="Describe what students need to accomplish today..."
@@ -157,7 +157,7 @@ export function QuestDialog({ isOpen, onClose, accessToken, projectId, classes }
               ) : (
                 <>
                   <Send className="w-4 h-4 mr-2" />
-                  Assign Quest
+                  Assign Task
                 </>
               )}
             </Button>

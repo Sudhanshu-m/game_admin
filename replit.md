@@ -1,45 +1,33 @@
-# Dental College Portal - Admin Panel for Teachers
+# Dental College Management Portal
 
-## Overview
-A React-based web application serving as a portal for a dental college. It provides two main portals:
-- **Admin Portal** - For teachers and administrators to manage student records, marks, assignments, and tasks
-- **Student Portal** - For dental college students to view grades, track experience points, view tasks, and receive notifications
+A comprehensive portal for dental colleges featuring distinct teacher (Admin) and student dashboards.
 
-## Tech Stack
-- **Frontend**: React 18 with TypeScript
-- **Build Tool**: Vite 6
-- **Styling**: Tailwind CSS (via index.css)
-- **UI Components**: Radix UI primitives + shadcn/ui pattern
-- **Backend/Database**: Supabase (external service)
-- **Charts**: Recharts
+## Features
 
-## Project Structure
-```
-├── index.html          # Entry HTML
-├── vite.config.ts      # Vite configuration (port 5000, host 0.0.0.0)
-├── tsconfig.json       # TypeScript config
-├── package.json        # Dependencies
-├── src/
-│   ├── main.tsx        # App entry point
-│   ├── App.tsx         # Main app with routing logic
-│   ├── StudentApp.tsx  # Student portal app
-│   ├── index.css       # Global styles (Tailwind)
-│   ├── components/     # React components
-│   │   ├── ui/         # Reusable UI components (shadcn/ui)
-│   │   ├── figma/      # Figma-derived components
-│   │   └── *.tsx       # Feature components
-│   ├── supabase/       # Supabase functions
-│   ├── utils/          # Utility functions
-│   └── styles/         # Additional styles
-└── build/              # Production build output
-```
+- **Teacher Dashboard (Admin)**:
+  - Class management (shared across all teachers).
+  - Student progress tracking and portal access management.
+  - Task and Quiz assignment with automated sorting (newest first).
+  - Marks management with CSV export capabilities.
+  - Global "Assign Task of the Day" system.
 
-## Running
-- Development: `npm run dev` (runs on port 5000)
-- Build: `npm run build` (outputs to `build/`)
+- **Student Dashboard**:
+  - Daily Task/Quest tracking.
+  - Gamified progress with XP, Levels, and Streaks.
+  - Course content and assignment management.
+  - Real-time notifications for grades and new tasks.
+  - Redesigned profile with deep performance analytics.
 
-## Deployment
-- Static deployment using the `build` directory
+- **Technical Stack**:
+  - **Frontend**: React (Vite) with Tailwind CSS and Shadcn UI.
+  - **Backend**: Supabase Edge Functions (Hono/Deno).
+  - **Database**: Supabase Auth + Deno KV for rapid state management.
+  - **Deployment**: Vercel (Frontend) and Supabase (Functions).
 
 ## Recent Changes
-- 2026-02-07: Initial Replit setup - configured Vite for port 5000, host 0.0.0.0, allowedHosts
+
+- Redesigned Student Profile to match Admin Settings aesthetic.
+- Fixed CORS issues in Edge Functions.
+- Implemented shared classes logic using Deno KV prefix scanning.
+- Unified "Quest" terminology to "Task" for better UX.
+- Optimized student list fetching for mobile performance.
