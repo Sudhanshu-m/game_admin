@@ -186,12 +186,11 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
     const currentLevelEXP = totalEXP % 500;
     const nextLevelEXP = 500;
 
-    // A task is completed if it has a grade or is explicitly marked as completed
-    const completedAssignments = tasksData.filter(t => 
-      t.completed === true || 
-      t.grade != null || 
-      gradesData.some(g => (g.taskId === t.id || g.task_id === t.id))
-    ).length;
+    // A task is completed if it has a grade, is explicitly marked as completed, or has an entry in gradesData
+    const completedAssignments = tasksData.filter(t => {
+      const isGraded = gradesData.some(g => (g.taskId === t.id || g.task_id === t.id));
+      return t.completed === true || t.grade != null || isGraded;
+    }).length;
     const totalAssignments = tasksData.length;
 
     setStats({
@@ -540,12 +539,12 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
   });
 
   const ongoingTasks = sortedTasks.filter(t => {
-    const isGraded = grades.some(g => g.taskId === t.id || g.task_id === t.id);
+    const isGraded = grades.some(g => g.taskId === t.id || g.task_id === t.id || g.assignment === t.title);
     return !t.completed && !isGraded;
   });
 
   const completedTasks = sortedTasks.filter(t => {
-    const isGraded = grades.some(g => g.taskId === t.id || g.task_id === t.id);
+    const isGraded = grades.some(g => g.taskId === t.id || g.task_id === t.id || g.assignment === t.title);
     return t.completed || isGraded;
   });
 

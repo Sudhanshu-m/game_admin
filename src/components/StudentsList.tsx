@@ -17,24 +17,37 @@ export function StudentsList({ students, onSelectStudent, classes, onRefresh }) 
   // Fetch streak and task data for all students
   useEffect(() => {
     const fetchStudentData = async () => {
+      // Use studentsWithData if already populated to avoid flickering, 
+      // but only if it matches current students length (simple heuristic)
+      if (studentsWithData.length === students.length && students.length > 0) {
+        return;
+      }
+
       setIsLoading(true);
       const accessToken = localStorage.getItem('access_token');
       if (!accessToken) {
-        console.error('No access token found');
         setStudentsWithData(students);
         setIsLoading(false);
         return;
       }
 
       try {
+        // Fetch all student tasks in a single batch request if possible, 
+        // but since we have a per-student endpoint, we'll keep the logic but optimize
         const studentsWithEnhancedData = await Promise.all(
           students.map(async (student) => {
             try {
-              // Fetch streak data
-              const streakResponse = await fetch(
-                `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/student-streak/${student.email}`,
-                { headers: { 'Authorization': `Bearer ${accessToken}` } }
-              );
+              // Parallelize per-student fetches
+              const [streakResponse, tasksResponse] = await Promise.all([
+                fetch(
+                  `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/student-streak/${student.email}`,
+                  { headers: { 'Authorization': `Bearer ${accessToken}` } }
+                ),
+                fetch(
+                  `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/student-tasks/${student.email}`,
+                  { headers: { 'Authorization': `Bearer ${accessToken}` } }
+                )
+              ]);
 
               let streakData = { currentStreak: 0, longestStreak: 0, dates: [] };
               if (streakResponse.ok) {
@@ -42,29 +55,18 @@ export function StudentsList({ students, onSelectStudent, classes, onRefresh }) 
                 streakData = result.streakData || streakData;
               }
 
-              // Fetch task data
-              const tasksResponse = await fetch(
-                `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/student-tasks/${student.email}`,
-                { headers: { 'Authorization': `Bearer ${accessToken}` } }
-              );
-
               let taskData = { completedCount: 0, totalCount: 0 };
               if (tasksResponse.ok) {
                 const result = await tasksResponse.json();
                 const tasks = result.tasks || [];
                 taskData = {
-                  completedCount: tasks.filter(t => t.completed).length,
+                  completedCount: tasks.filter(t => t.completed || t.grade != null).length,
                   totalCount: tasks.length
                 };
               }
 
-              return {
-                ...student,
-                streakData,
-                taskData
-              };
+              return { ...student, streakData, taskData };
             } catch (error) {
-              console.error(`Error fetching data for ${student.email}:`, error);
               return {
                 ...student,
                 streakData: { currentStreak: 0, longestStreak: 0, dates: [] },
@@ -76,7 +78,6 @@ export function StudentsList({ students, onSelectStudent, classes, onRefresh }) 
 
         setStudentsWithData(studentsWithEnhancedData);
       } catch (error) {
-        console.error('Error fetching student data:', error);
         setStudentsWithData(students);
       } finally {
         setIsLoading(false);
@@ -85,6 +86,8 @@ export function StudentsList({ students, onSelectStudent, classes, onRefresh }) 
 
     if (students && students.length > 0) {
       fetchStudentData();
+    } else {
+      setStudentsWithData([]);
     }
   }, [students]);
 
