@@ -14,7 +14,7 @@ app.options("*", (c) => {
   return c.text("", 204, {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, apikey, x-client-info",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, apikey, x-client-info, x-application-name",
     "Access-Control-Max-Age": "86400",
   });
 });
@@ -30,6 +30,7 @@ app.use(
       "X-Client-Info",
       "apikey",
       "x-client-info",
+      "x-application-name",
     ],
     exposeHeaders: ["Content-Length", "X-JSON"],
     maxAge: 86400,
