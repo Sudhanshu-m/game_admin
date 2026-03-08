@@ -591,6 +591,9 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
             selectedClass={selectedClass}
             onBack={() => setActiveView('class-view')}
             accessToken={accessToken}
+            onTaskCreated={(newTask) => {
+              setTasks(prev => [newTask, ...prev]);
+            }}
           />
         );
       case 'add-quiz':

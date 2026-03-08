@@ -16,7 +16,7 @@ import { ArrowLeft, Sparkles, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { projectId } from '../utils/supabase/info';
 
-export function AddDailyTask({ selectedClass, onBack, accessToken }) {
+export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated }) {
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
   const [subject, setSubject] = useState(selectedClass?.name || '');
@@ -58,12 +58,16 @@ export function AddDailyTask({ selectedClass, onBack, accessToken }) {
       );
 
       if (response.ok) {
+        const data = await response.json();
         toast.success('Task assigned to all students in the class!');
         setTaskTitle('');
         setTaskDescription('');
         setDueDate('');
         setPriority('Medium');
         setRewardPoints('100');
+        if (onTaskCreated && data.task) {
+          onTaskCreated(data.task);
+        }
         onBack();
       } else {
         const errorData = await response.json();
@@ -131,7 +135,7 @@ export function AddDailyTask({ selectedClass, onBack, accessToken }) {
                 </Label>
                 <Textarea
                   id="description"
-                  placeholder="Describe the quest and what students need to accomplish..."
+                  placeholder="Describe the task and what students need to accomplish..."
                   value={taskDescription}
                   onChange={(e) => setTaskDescription(e.target.value)}
                   rows={4}
@@ -205,7 +209,7 @@ export function AddDailyTask({ selectedClass, onBack, accessToken }) {
               <Alert className="border-l-4 border-l-amber-500 bg-amber-50">
                 <Sparkles className="h-4 w-4 text-amber-600" />
                 <AlertDescription className="text-amber-900 ml-2">
-                  <strong>Task Assignment:</strong> This daily task will be automatically assigned to all {selectedClass?.studentCount || 0} student(s) currently enrolled in {selectedClass?.name}. It will appear as a highlighted task card on their dashboard!
+                  <strong>Task Assignment:</strong> This task will be automatically assigned to all students currently enrolled in {selectedClass?.name}. It will appear as a highlighted task card on their dashboard!
                 </AlertDescription>
               </Alert>
             </div>
