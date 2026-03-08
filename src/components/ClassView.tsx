@@ -443,7 +443,7 @@ export function ClassView({ classData, students, onBack, onAddTask, onAddQuiz, a
             className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-0 shadow-md"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Add Quest
+            Add Task
           </Button>
         </div>
       </div>

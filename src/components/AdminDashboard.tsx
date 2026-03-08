@@ -16,7 +16,7 @@ import { Settings } from './Settings';
 import { AssignStudent } from './AssignStudent';
 import { RegisteredStudentsList } from './RegisteredStudentsList';
 import { DebugPanel } from './DebugPanel';
-import { QuestDialog } from './QuestDialog';
+import { AddDailyTask } from './AddDailyTask';
 import { 
   Users, 
   GraduationCap, 
@@ -47,7 +47,6 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
   const [classes, setClasses] = useState([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [registeredStudents, setRegisteredStudents] = useState([]);
-  const [isQuestDialogOpen, setIsQuestDialogOpen] = useState(false);
 
   // Load data from backend on mount
   useEffect(() => {
@@ -588,11 +587,10 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
         );
       case 'add-task':
         return (
-          <AddTask
-            classData={selectedClass}
-            students={allStudents}
+          <AddDailyTask
+            selectedClass={selectedClass}
             onBack={() => setActiveView('class-view')}
-            onAddTask={handleAddTask}
+            accessToken={accessToken}
           />
         );
       case 'add-quiz':
@@ -733,11 +731,11 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
                     Manage Marks
                   </Button>
                   <Button 
-                    onClick={() => setIsQuestDialogOpen(true)}
+                    onClick={() => setActiveView("add-task")}
                     className="w-full justify-start bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0"
                   >
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Assign Quest
+                    Assign Task
                   </Button>
                 </div>
               </div>
@@ -833,7 +831,7 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
               {activeView === 'class-view' && `📚 ${selectedClass?.name}`}
               {activeView === 'add-student' && '➕ Add Student'}
               {activeView === 'add-class' && '➕ Add Class'}
-              {activeView === 'add-task' && `✨ Add Daily Quest - ${selectedClass?.name}`}
+              {activeView === 'add-task' && `✨ Add Daily Task - ${selectedClass?.name}`}
               {activeView === 'add-quiz' && `✏️ Add Quiz - ${selectedClass?.name}`}
               {activeView === 'profile' && `👤 ${selectedStudent?.name} Profile`}
               {activeView === 'assign-student' && `👤 Assign ${selectedStudent?.name} to Class`}
@@ -851,13 +849,6 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
         </div>
       </div>
       
-      <QuestDialog
-        isOpen={isQuestDialogOpen}
-        onClose={() => setIsQuestDialogOpen(false)}
-        accessToken={accessToken}
-        projectId={projectId}
-        classes={classes}
-      />
     </SidebarProvider>
   );
 }
