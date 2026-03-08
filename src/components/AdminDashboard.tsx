@@ -299,7 +299,6 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
     { id: 'classes', label: 'Classes', icon: School },
     { id: 'tasks-quizzes', label: 'Tasks & Quizzes', icon: ListTodo },
     { id: 'marks', label: 'Marks Management', icon: BookOpen },
-    { id: 'add-task', label: 'Assign Task', icon: Plus },
     { id: 'add-class', label: 'Add Class', icon: GraduationCap },
     { id: 'debug', label: 'Debug Panel', icon: Database },
     { id: 'settings', label: 'Settings', icon: SettingsIcon },

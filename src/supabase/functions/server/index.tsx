@@ -263,8 +263,8 @@ app.post("/make-server-2fad19e1/teacher/grades", async (c) => {
   }
 });
 
-// Assign task of the day (formerly daily quest)
-app.post("/make-server-2fad19e1/teacher/quest", async (c) => {
+// Add task of the day - makes it appear in Tasks & Quizzes and student dashboards
+app.post("/make-server-2fad19e1/teacher/add-task", async (c) => {
   try {
     const accessToken = c.req.header("Authorization")?.split(" ")[1];
     if (!accessToken) return c.json({ error: "Unauthorized" }, 401);
@@ -274,31 +274,47 @@ app.post("/make-server-2fad19e1/teacher/quest", async (c) => {
     if (error || !user) return c.json({ error: "Unauthorized" }, 401);
 
     const body = await c.req.json();
-    const { title, description, points, date, class_id } = body;
+    const { title, description, points, date, class_id, type } = body;
 
-    const quest = {
-      id: `quest-${Date.now()}`,
+    const task = {
+      id: `task-${Date.now()}`,
       title,
       description,
       points: points || 50,
+      type: type || "task",
       date: date || new Date().toISOString().split("T")[0],
+      dueDate: date || new Date().toISOString().split("T")[0],
       classId: class_id,
       teacherId: user.id,
-      teacherName: user.user_metadata?.name || user.email,
+      createdAt: new Date().toISOString(),
     };
 
-    await kv.set("daily_quest", quest);
+    // Add to teacher's tasks list
+    const tasksKey = `tasks:${user.id}`;
+    const tasks = (await kv.get(tasksKey)) || [];
+    tasks.push(task);
+    await kv.set(tasksKey, tasks);
 
-    // Notify students
+    // Assign to all students in the class
     const allProfiles = await kv.getByPrefix({ prefix: ["student_profile:"] });
     for await (const entry of allProfiles) {
       const student = entry.value;
       if (student && student.classId === class_id) {
+        const studentTasksKey = `student_tasks:${student.email}`;
+        const studentTasks = (await kv.get(studentTasksKey)) || [];
+        studentTasks.push({
+          ...task,
+          completed: false,
+          grade: null,
+        });
+        await kv.set(studentTasksKey, studentTasks);
+
+        // Notify student
         const notifKey = `notifications:${student.email}`;
         const notifs = (await kv.get(notifKey)) || [];
         notifs.push({
           id: `notif-${Date.now()}-${student.email}`,
-          type: "quest",
+          type: "task",
           title: `New Task: ${title}`,
           message: description,
           createdAt: new Date().toISOString(),
@@ -308,10 +324,15 @@ app.post("/make-server-2fad19e1/teacher/quest", async (c) => {
       }
     }
 
-    return c.json({ success: true, quest });
+    return c.json({ success: true, task });
   } catch (error) {
     return c.json({ error: error.message }, 500);
   }
+});
+
+// Keep quest endpoint for backward compatibility
+app.post("/make-server-2fad19e1/teacher/quest", async (c) => {
+  return c.redirect(307, "/make-server-2fad19e1/teacher/add-task");
 });
 
 // --- STUDENT ENDPOINTS ---

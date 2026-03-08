@@ -1,62 +1,93 @@
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
-import { Button } from './ui/button';
-import { Textarea } from './ui/textarea';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Sparkles, Send } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import React, { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "./ui/dialog";
+import { Button } from "./ui/button";
+import { Textarea } from "./ui/textarea";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { Sparkles, Send } from "lucide-react";
+import { toast } from "sonner@2.0.3";
 
-export function QuestDialog({ isOpen, onClose, accessToken, projectId, classes }) {
-  const [questTitle, setQuestTitle] = useState('');
-  const [questDescription, setQuestDescription] = useState('');
-  const [questPoints, setQuestPoints] = useState('50');
-  const [selectedClass, setSelectedClass] = useState('');
+export function QuestDialog({
+  isOpen,
+  onClose,
+  accessToken,
+  projectId,
+  classes,
+}) {
+  const [questTitle, setQuestTitle] = useState("");
+  const [questDescription, setQuestDescription] = useState("");
+  const [questPoints, setQuestPoints] = useState("50");
+  const [selectedClass, setSelectedClass] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!questTitle.trim() || !questDescription.trim()) {
-      toast.error('Please fill in all fields');
+
+    if (!questTitle.trim() || !questDescription.trim() || !selectedClass) {
+      toast.error("Please fill in all fields");
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/quest`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            title: questTitle,
-            description: questDescription,
-            points: parseInt(questPoints) || 50,
-            date: new Date().toISOString().split('T')[0],
-            class_id: selectedClass
-          })
-        }
-      );
+      const newTask = {
+        id: `task-${Date.now()}`,
+        classId: selectedClass,
+        title: questTitle,
+        description: questDescription,
+        maxPoints: parseInt(questPoints) || 50,
+        dueDate: new Date().toISOString().split("T")[0],
+        createdAt: new Date().toISOString(),
+        status: "active",
+        type: "task",
+      };
 
-      if (response.ok) {
-        toast.success('Quest assigned to all students! 🎯');
-        setQuestTitle('');
-        setQuestDescription('');
-        setQuestPoints('50');
-        onClose();
-      } else {
-        const errorData = await response.json();
-        toast.error('Failed to assign quest: ' + (errorData.error || 'Unknown error'));
-      }
+      const enrolledStudents =
+        classes.find((c) => c.id === selectedClass)?.students || [];
+
+      enrolledStudents.forEach((student) => {
+        const studentTasksKey = `student_tasks:${student.email}`;
+
+        const existingTasks = JSON.parse(
+          localStorage.getItem(studentTasksKey) || "[]",
+        );
+
+        const studentTask = {
+          ...newTask,
+          completed: false,
+          started: false,
+          submittedAt: null,
+        };
+
+        existingTasks.push(studentTask);
+
+        localStorage.setItem(studentTasksKey, JSON.stringify(existingTasks));
+      });
+
+      toast.success("Quest assigned to students!");
+
+      setQuestTitle("");
+      setQuestDescription("");
+      setQuestPoints("50");
+
+      onClose();
     } catch (error) {
-      console.error('Error assigning quest:', error);
-      toast.error('Failed to assign quest');
+      console.error(error);
+      toast.error("Failed to assign quest");
     }
 
     setLoading(false);
@@ -71,10 +102,11 @@ export function QuestDialog({ isOpen, onClose, accessToken, projectId, classes }
             Assign Task of the Day
           </DialogTitle>
           <DialogDescription>
-            Create a special task that will appear on all students' dashboards today.
+            Create a special task that will appear on all students' dashboards
+            today.
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div>
             <Label htmlFor="quest-title">Task Title</Label>
