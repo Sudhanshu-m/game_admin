@@ -302,39 +302,42 @@ app.post("/make-server-2fad19e1/teacher/add-task", async (c) => {
     console.log("Task added to teacher list:", task.id);
 
     // Assign to students in the class
-    // In this app, students are stored in students:teacherId
-    const studentsKey = `students:${user.id}`;
-    const teacherStudents = (await kv.get(studentsKey)) || [];
-    const classStudents = teacherStudents.filter(s => s.classId === class_id);
+    // Correctly list all student profiles to find those in the class
+    const allProfiles = kv.list({ prefix: ["student_profile:"] });
+    let assignmentCount = 0;
     
-    console.log(`Assigning task to ${classStudents.length} students in class ${class_id}`);
+    for await (const entry of allProfiles) {
+      const student = entry.value;
+      if (student && student.classId === class_id) {
+        const studentTasksKey = `student_tasks:${student.email}`;
+        const studentTasks = (await kv.get(studentTasksKey)) || [];
+        studentTasks.push({
+          ...task,
+          completed: false,
+          grade: null,
+        });
+        await kv.set(studentTasksKey, studentTasks);
 
-    for (const student of classStudents) {
-      const studentTasksKey = `student_tasks:${student.email}`;
-      const studentTasks = (await kv.get(studentTasksKey)) || [];
-      studentTasks.push({
-        ...task,
-        completed: false,
-        grade: null,
-      });
-      await kv.set(studentTasksKey, studentTasks);
-
-      // Notify student
-      const notifKey = `notifications:${student.email}`;
-      const notifs = (await kv.get(notifKey)) || [];
-      notifs.push({
-        id: `notif-${Date.now()}-${student.email}`,
-        type: "task",
-        title: `New Task: ${title}`,
-        message: description,
-        createdAt: new Date().toISOString(),
-        read: false,
-        taskId: task.id
-      });
-      await kv.set(notifKey, notifs);
+        // Notify student
+        const notifKey = `notifications:${student.email}`;
+        const notifs = (await kv.get(notifKey)) || [];
+        notifs.push({
+          id: `notif-${Date.now()}-${student.email}`,
+          type: "task",
+          title: `New Task: ${title}`,
+          message: description,
+          createdAt: new Date().toISOString(),
+          read: false,
+          taskId: task.id
+        });
+        await kv.set(notifKey, notifs);
+        assignmentCount++;
+      }
     }
+    
+    console.log(`Assigned task to ${assignmentCount} students via profile scan`);
 
-    return c.json({ success: true, task });
+    return c.json({ success: true, task, assignedCount: assignmentCount });
   } catch (error) {
     console.log("Add task error:", error);
     return c.json({ error: error.message }, 500);
