@@ -344,9 +344,9 @@ export function StudentDashboard({
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex flex-col h-screen overflow-hidden">
       {/* Mobile Header */}
-      <div className="lg:hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-xl sticky top-0 z-50">
+      <div className="lg:hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-xl flex-shrink-0 z-50">
         <div className="flex items-center justify-between p-4">
           <Button
             variant="ghost"
@@ -383,7 +383,7 @@ export function StudentDashboard({
         </div>
       </div>
 
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* Sidebar */}
         <div
           className={`${
@@ -457,8 +457,16 @@ export function StudentDashboard({
           </div>
         </div>
 
+        {/* Overlay for mobile sidebar */}
+        {isSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         {/* Main Content */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto w-full">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
             {/* Profile Content if active */}
             {activeView === 'profile' && (
@@ -598,7 +606,7 @@ export function StudentDashboard({
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   {/* Recent Tasks */}
-                  <div className="lg:col-span-2 space-y-6">
+                  <div className="lg:col-span-2 space-y-6 overflow-hidden">
                     <div className="flex items-center justify-between">
                       <h3 className="text-xl font-black text-gray-800 flex items-center gap-2">
                         <ListTodo className="w-6 h-6 text-indigo-600" />
@@ -684,7 +692,7 @@ export function StudentDashboard({
                   </div>
 
                   {/* Sidebar - Quick Access */}
-                  <div className="space-y-6">
+                  <div className="space-y-6 overflow-hidden">
                     <h3 className="text-xl font-black text-gray-800 flex items-center gap-2">
                       <Zap className="w-6 h-6 text-amber-500" />
                       QUICK ACCESS
@@ -786,7 +794,7 @@ export function StudentDashboard({
             )}
 
             {activeView === "grades" && (
-              <div className="space-y-8 animate-in fade-in duration-500">
+              <div className="space-y-8 animate-in fade-in duration-500 overflow-hidden">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-black text-gray-800 flex items-center gap-3">
                     <BookOpen className="w-8 h-8 text-indigo-600" />
@@ -902,7 +910,7 @@ export function StudentDashboard({
             )}
 
             {activeView === "tasks" && (
-              <div className="space-y-8 animate-in fade-in duration-500">
+              <div className="space-y-8 animate-in fade-in duration-500 overflow-hidden">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <h2 className="text-2xl font-black text-gray-800 flex items-center gap-3">
                     <ListTodo className="w-8 h-8 text-indigo-600" />
@@ -1025,7 +1033,7 @@ export function StudentDashboard({
                           return (
                             <Card
                               key={task.id}
-                              className="border-0 shadow-md bg-white/60 opacity-80"
+                              className="border-0 shadow-md bg-white/60 opacity-80 overflow-hidden"
                             >
                               <CardContent className="p-6">
                                 <div className="flex justify-between items-start mb-4">
@@ -1068,7 +1076,7 @@ export function StudentDashboard({
             )}
 
             {activeView === "leaderboard" && (
-              <div className="space-y-8 animate-in fade-in duration-500">
+              <div className="space-y-8 animate-in fade-in duration-500 overflow-hidden">
                 <div className="text-center max-w-2xl mx-auto space-y-4">
                   <div className="inline-block p-3 bg-indigo-50 rounded-3xl mb-2">
                     <Trophy className="w-12 h-12 text-indigo-600" />
