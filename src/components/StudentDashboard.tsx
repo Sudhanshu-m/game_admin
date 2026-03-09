@@ -1,23 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Progress } from './ui/progress';
-import { Avatar, AvatarFallback } from './ui/avatar';
-import { ScrollArea } from './ui/scroll-area';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Separator } from './ui/separator';
-import { Alert, AlertDescription } from './ui/alert';
-import { TakeQuiz } from './TakeQuiz';
-import { NotificationsDropdown } from './NotificationsDropdown';
-import { 
-  Trophy, 
-  Star, 
-  TrendingUp, 
-  BookOpen, 
-  Target, 
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
+import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
+import { Progress } from "./ui/progress";
+import { Avatar, AvatarFallback } from "./ui/avatar";
+import { ScrollArea } from "./ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "./ui/dialog";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
+import { Separator } from "./ui/separator";
+import { Alert, AlertDescription } from "./ui/alert";
+import { TakeQuiz } from "./TakeQuiz";
+import { NotificationsDropdown } from "./NotificationsDropdown";
+import {
+  Trophy,
+  Star,
+  TrendingUp,
+  BookOpen,
+  Target,
   Award,
   Bell,
   LogOut,
@@ -40,16 +47,260 @@ import {
   MessageSquare,
   Info,
   Upload,
-  ExternalLink
-} from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+  ExternalLink,
+  Mail,
+  Phone,
+  MapPin,
+  Camera,
+  Save,
+} from "lucide-react";
+import { toast } from "sonner@2.0.3";
 
-export function StudentDashboard({ student, onLogout, accessToken, projectId }) {
+// Move ProfileView outside to prevent remounting and cursor issues
+const ProfileView = ({ profileData, stats, setProfileData, isUpdatingProfile, handleUpdateProfile, student }) => {
+  return (
+    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Header Banner - Matches Settings style */}
+      <div className="p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl text-white shadow-xl">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-3 bg-white/20 rounded-lg">
+            <Settings className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-medium">Settings</h1>
+            <p className="text-white/90 text-sm mt-1">Manage your account and preferences</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs list simulation matching Settings style */}
+      <div className="flex bg-gray-100/50 p-1 rounded-xl w-fit mb-6">
+        <button className="px-6 py-2 bg-white rounded-lg shadow-sm text-sm font-medium text-indigo-600 flex items-center gap-2">
+          <User className="w-4 h-4" />
+          Profile
+        </button>
+        <button className="px-6 py-2 text-sm font-medium text-gray-500 flex items-center gap-2 hover:text-gray-700">
+          <Bell className="w-4 h-4" />
+          Notifications
+        </button>
+        <button className="px-6 py-2 text-sm font-medium text-gray-500 flex items-center gap-2 hover:text-gray-700">
+          <Zap className="w-4 h-4" />
+          Preferences
+        </button>
+        <button className="px-6 py-2 text-sm font-medium text-gray-500 flex items-center gap-2 hover:text-gray-700">
+          <Clock className="w-4 h-4" />
+          Security
+        </button>
+      </div>
+
+      <Card className="border-0 shadow-lg">
+        <CardHeader>
+          <CardTitle>Profile Information</CardTitle>
+          <CardDescription>Update your personal and professional details</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-8">
+          {/* Avatar Section */}
+          <div className="flex items-center gap-6">
+            <div className="relative">
+              <Avatar className="w-24 h-24 border-4 border-white shadow-xl">
+                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-2xl">
+                  {profileData.name?.slice(0, 2).toUpperCase() || "ST"}
+                </AvatarFallback>
+              </Avatar>
+              <Button
+                size="sm"
+                className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg border-2 border-white"
+              >
+                <Camera className="w-4 h-4" />
+              </Button>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">{profileData.name}</h3>
+              <p className="text-sm text-muted-foreground mb-3">{profileData.department || "General Dentistry"}</p>
+              <Button variant="outline" size="sm" className="h-8">Change Photo</Button>
+            </div>
+          </div>
+
+          <form onSubmit={handleUpdateProfile} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Full Name */}
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-semibold text-gray-700">Full Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="name"
+                    value={profileData.name}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+                    className="pl-10 h-11 bg-gray-50/50 border-gray-200 focus:ring-indigo-500 transition-all"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+              </div>
+
+              {/* Email Address */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    value={profileData.email}
+                    disabled
+                    className="pl-10 h-11 bg-gray-100 text-muted-foreground border-gray-200 cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              {/* Phone Number */}
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">Phone Number</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    value={profileData.phone}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+                    className="pl-10 h-11 bg-gray-50/50 border-gray-200 focus:ring-indigo-500 transition-all"
+                    placeholder="+91 98765 43210"
+                  />
+                </div>
+              </div>
+
+              {/* Department */}
+              <div className="space-y-2">
+                <Label htmlFor="department" className="text-sm font-semibold text-gray-700">Department</Label>
+                <div className="relative">
+                  <BookOpen className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="department"
+                    value={profileData.department}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, department: e.target.value }))}
+                    className="pl-10 h-11 bg-gray-50/50 border-gray-200 focus:ring-indigo-500 transition-all"
+                    placeholder="e.g. Oral Pathology"
+                  />
+                </div>
+              </div>
+
+              {/* Specialization */}
+              <div className="space-y-2">
+                <Label htmlFor="specialization" className="text-sm font-semibold text-gray-700">Specialization</Label>
+                <div className="relative">
+                  <GraduationCap className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="specialization"
+                    value={profileData.specialization || ""}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, specialization: e.target.value }))}
+                    className="pl-10 h-11 bg-gray-50/50 border-gray-200 focus:ring-indigo-500 transition-all"
+                    placeholder="e.g. Oral Medicine and Radiology"
+                  />
+                </div>
+              </div>
+
+              {/* Qualification */}
+              <div className="space-y-2">
+                <Label htmlFor="qualification" className="text-sm font-semibold text-gray-700">Qualification</Label>
+                <Input
+                  id="qualification"
+                  value={profileData.qualification || ""}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, qualification: e.target.value }))}
+                  className="h-11 bg-gray-50/50 border-gray-200 focus:ring-indigo-500 transition-all"
+                  placeholder="e.g. BDS, MDS"
+                />
+              </div>
+
+              {/* Years of Experience / Academic Year */}
+              <div className="space-y-2">
+                <Label htmlFor="experience" className="text-sm font-semibold text-gray-700">Academic Year / Experience</Label>
+                <Input
+                  id="experience"
+                  value={profileData.batch || ""}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, batch: e.target.value }))}
+                  className="h-11 bg-gray-50/50 border-gray-200 focus:ring-indigo-500 transition-all"
+                  placeholder="e.g. 2nd Year"
+                />
+              </div>
+
+              {/* Join Date */}
+              <div className="space-y-2">
+                <Label htmlFor="joinDate" className="text-sm font-semibold text-gray-700">Join Date</Label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="joinDate"
+                    value={profileData.joinDate || "January 2024"}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, joinDate: e.target.value }))}
+                    className="pl-10 h-11 bg-gray-50/50 border-gray-200 focus:ring-indigo-500 transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Address */}
+            <div className="space-y-2">
+              <Label htmlFor="address" className="text-sm font-semibold text-gray-700">Address</Label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="address"
+                  value={profileData.address || ""}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, address: e.target.value }))}
+                  className="pl-10 h-11 bg-gray-50/50 border-gray-200 focus:ring-indigo-500 transition-all"
+                  placeholder="Enter your campus address"
+                />
+              </div>
+            </div>
+
+            {/* Bio */}
+            <div className="space-y-2">
+              <Label htmlFor="bio" className="text-sm font-semibold text-gray-700">Bio</Label>
+              <Textarea
+                id="bio"
+                value={profileData.bio || ""}
+                onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
+                rows={4}
+                className="bg-gray-50/50 border-gray-200 focus:ring-indigo-500 transition-all resize-none"
+                placeholder="Passionate about dental education and clinical excellence..."
+              />
+            </div>
+
+            <div className="flex pt-4">
+              <Button
+                type="submit"
+                disabled={isUpdatingProfile}
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg px-10 h-11 hover:scale-[1.02] transition-transform active:scale-[0.98]"
+              >
+                {isUpdatingProfile ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Saving...
+                  </div>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export function StudentDashboard({
+  student,
+  onLogout,
+  accessToken,
+  projectId,
+}) {
   const [grades, setGrades] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [assignedClass, setAssignedClass] = useState(null);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
-  const [activeView, setActiveView] = useState('dashboard');
+  const [activeView, setActiveView] = useState("dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [dailyQuest, setDailyQuest] = useState(null);
@@ -59,14 +310,15 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [profileData, setProfileData] = useState({
-    name: student?.name || '',
-    email: student?.email || '',
-    username: student?.username || '',
-    rollNumber: student?.rollNumber || '',
-    batch: student?.batch || '',
-    phone: '',
-    department: '',
-    semester: ''
+    name: student?.name || "",
+    email: student?.email || "",
+    username: student?.username || "",
+    rollNumber: student?.rollNumber || "",
+    batch: student?.batch || "",
+    class: "",
+    phone: "",
+    department: "",
+    semester: "",
   });
   const [stats, setStats] = useState({
     totalEXP: 0,
@@ -75,7 +327,7 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
     nextLevelEXP: 100,
     streak: 0,
     totalAssignments: 0,
-    completedAssignments: 0
+    completedAssignments: 0,
   });
 
   useEffect(() => {
@@ -90,23 +342,27 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
         `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/data`,
         {
           headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        }
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
       );
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Student data loaded:', data);
+        console.log("Student data loaded:", data);
         setGrades(data.grades || []);
         setTasks(data.tasks || []);
         setAssignedClass(data.assignedClass || null);
         setAdminMessage(data.adminMessage || null);
-        calculateStats(data.grades || [], data.tasks || [], data.streakData || { currentStreak: 0, longestStreak: 0 });
+        calculateStats(
+          data.grades || [],
+          data.tasks || [],
+          data.streakData || { currentStreak: 0, longestStreak: 0 },
+        );
       }
     } catch (error) {
-      console.error('Error loading student data:', error);
-      toast.error('Failed to load data');
+      console.error("Error loading student data:", error);
+      toast.error("Failed to load data");
     }
   };
 
@@ -116,20 +372,20 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
         `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/notifications`,
         {
           headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        }
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
       );
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Notifications loaded:', data.notifications);
+        console.log("Notifications loaded:", data.notifications);
         setNotifications(data.notifications || []);
-        const unread = (data.notifications || []).filter(n => !n.read).length;
+        const unread = (data.notifications || []).filter((n) => !n.read).length;
         setUnreadCount(unread);
       }
     } catch (error) {
-      console.error('Error loading notifications:', error);
+      console.error("Error loading notifications:", error);
     }
   };
 
@@ -139,27 +395,26 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
         `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/quest`,
         {
           headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        }
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
       );
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Daily quest data:', data);
+        console.log("Daily quest data:", data);
         if (data.quest) {
           setDailyQuest(data.quest);
         }
       }
     } catch (error) {
-      console.error('Error checking daily quest:', error);
+      console.error("Error checking daily quest:", error);
     }
   };
 
   const calculateStats = (gradesData, tasksData, streakData) => {
     // Calculate total EXP from grades
     const totalEXP = gradesData.reduce((sum, grade) => {
-      // Check if grade has valid score and maxScore
       if (grade.score != null && grade.maxScore != null && grade.maxScore > 0) {
         const percentage = (grade.score / grade.maxScore) * 100;
         const baseExp = Math.floor(percentage);
@@ -169,13 +424,10 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
         else if (percentage >= 80) bonus = 5;
         return sum + baseExp + bonus;
       }
-      // If using letter grades, use grade map
       if (grade.grade) {
         const gradeMap = {
-          'A+': 100, 'A': 95, 'A-': 90,
-          'B+': 85, 'B': 80, 'B-': 75,
-          'C+': 70, 'C': 65, 'C-': 60,
-          'D': 50, 'F': 0
+          "A+": 100, A: 95, "A-": 90, "B+": 85, B: 80, "B-": 75,
+          "C+": 70, C: 65, "C-": 60, D: 50, F: 0,
         };
         return sum + (gradeMap[grade.grade] || 0);
       }
@@ -186,9 +438,10 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
     const currentLevelEXP = totalEXP % 500;
     const nextLevelEXP = 500;
 
-    // A task is completed if it has a grade, is explicitly marked as completed, or has an entry in gradesData
-    const completedAssignments = tasksData.filter(t => {
-      const isGraded = gradesData.some(g => (g.taskId === t.id || g.task_id === t.id));
+    const completedAssignments = tasksData.filter((t) => {
+      const isGraded = gradesData.some(
+        (g) => g.taskId === t.id || g.task_id === t.id,
+      );
       return t.completed === true || t.grade != null || isGraded;
     }).length;
     const totalAssignments = tasksData.length;
@@ -200,31 +453,8 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
       nextLevelEXP,
       streak: streakData?.currentStreak || 0,
       totalAssignments,
-      completedAssignments
+      completedAssignments,
     });
-  };
-
-  const markTaskAttempted = async (taskId) => {
-    try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/task/${taskId}/attempt`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (response.ok) {
-        toast.success('Task marked as attempted!');
-        loadStudentData();
-      }
-    } catch (error) {
-      console.error('Error attempting task:', error);
-      toast.error('Failed to mark task as attempted');
-    }
   };
 
   const handleQuizSubmission = async (submission) => {
@@ -232,96 +462,25 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/quiz/submit`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify(submission)
-        }
+          body: JSON.stringify(submission),
+        },
       );
 
       if (response.ok) {
-        toast.success('Quiz submitted successfully!');
+        toast.success("Quiz submitted successfully!");
         setSelectedQuiz(null);
         loadStudentData();
       } else {
-        toast.error('Failed to submit quiz');
+        toast.error("Failed to submit quiz");
       }
     } catch (error) {
-      console.error('Error submitting quiz:', error);
-      toast.error('Failed to submit quiz');
-    }
-  };
-
-  const startQuiz = (quiz) => {
-    setSelectedQuiz(quiz);
-  };
-
-  const markDailyQuestSeen = async () => {
-    try {
-      await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/daily-quest/seen`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        }
-      );
-    } catch (error) {
-      console.error('Error marking daily quest as seen:', error);
-    }
-  };
-
-  const getGradeBadge = (score, maxScore, letterGrade) => {
-    if (letterGrade) {
-      const colors = {
-        'A+': 'from-green-500 to-emerald-600',
-        'A': 'from-green-500 to-emerald-600',
-        'A-': 'from-blue-500 to-blue-600',
-        'B+': 'from-blue-400 to-blue-500',
-        'B': 'from-blue-400 to-blue-500',
-        'B-': 'from-yellow-500 to-orange-400',
-        'C+': 'from-yellow-500 to-orange-500',
-        'C': 'from-orange-400 to-orange-500',
-        'C-': 'from-orange-500 to-red-400',
-        'D': 'from-red-400 to-red-500',
-        'F': 'from-red-500 to-red-600'
-      };
-      return { label: letterGrade, color: colors[letterGrade] || 'from-gray-400 to-gray-500' };
-    }
-    if (score == null || maxScore == null || maxScore === 0) {
-      return { label: 'N/A', color: 'from-gray-400 to-gray-500' };
-    }
-    const percentage = (score / maxScore) * 100;
-    if (percentage >= 90) return { label: 'A+', color: 'from-green-500 to-emerald-600' };
-    if (percentage >= 85) return { label: 'A', color: 'from-green-500 to-emerald-600' };
-    if (percentage >= 80) return { label: 'A-', color: 'from-blue-500 to-blue-600' };
-    if (percentage >= 75) return { label: 'B+', color: 'from-blue-400 to-blue-500' };
-    if (percentage >= 70) return { label: 'B', color: 'from-blue-400 to-blue-500' };
-    if (percentage >= 65) return { label: 'B-', color: 'from-yellow-500 to-orange-400' };
-    if (percentage >= 60) return { label: 'C+', color: 'from-yellow-500 to-orange-500' };
-    if (percentage >= 55) return { label: 'C', color: 'from-orange-400 to-orange-500' };
-    if (percentage >= 50) return { label: 'C-', color: 'from-orange-500 to-red-400' };
-    if (percentage >= 40) return { label: 'D', color: 'from-red-400 to-red-500' };
-    return { label: 'F', color: 'from-red-500 to-red-600' };
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'high': return 'text-red-600 bg-red-50 border-red-200';
-      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'low': return 'text-green-600 bg-green-50 border-green-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
-    }
-  };
-
-  const handleNotificationClick = (notification) => {
-    // If it's a quest notification, navigate to tasks view
-    if (notification.type === 'quest') {
-      setActiveView('tasks');
-      setShowNotifications(false);
+      console.error("Error submitting quiz:", error);
+      toast.error("Failed to submit quiz");
     }
   };
 
@@ -330,32 +489,30 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
       await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/notifications/read`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify({ notificationId })
-        }
+          body: JSON.stringify({ notificationId }),
+        },
       );
 
-      // Update local state
-      setNotifications(prev => prev.map(n => 
-        n.id === notificationId ? { ...n, read: true } : n
-      ));
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n)),
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error("Error marking notification as read:", error);
     }
   };
 
-  // Sidebar navigation items (removed notifications)
   const sidebarItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'grades', label: 'My Grades', icon: BookOpen },
-    { id: 'tasks', label: 'Tasks & Quizzes', icon: ListTodo },
-    { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
-    { id: 'profile', label: 'My Profile', icon: User },
+    { id: "dashboard", label: "Dashboard", icon: Home },
+    { id: "grades", label: "My Grades", icon: BookOpen },
+    { id: "tasks", label: "Tasks & Quizzes", icon: ListTodo },
+    { id: "leaderboard", label: "Leaderboard", icon: Trophy },
+    { id: "profile", label: "My Profile", icon: User },
   ];
 
   if (selectedQuiz) {
@@ -371,180 +528,51 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   const handleUpdateProfile = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setIsUpdatingProfile(true);
     try {
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/profile/update`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify(profileData)
-        }
+          body: JSON.stringify(profileData),
+        },
       );
 
       if (response.ok) {
-        toast.success('Profile updated successfully!');
+        toast.success("Profile updated successfully!");
         loadStudentData();
       } else {
-        toast.error('Failed to update profile');
+        toast.error("Failed to update profile");
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error('Error updating profile');
+      console.error("Error updating profile:", error);
+      toast.error("Error updating profile");
     } finally {
       setIsUpdatingProfile(false);
     }
   };
 
-  // Profile View Component
-  const ProfileView = () => (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <User className="w-7 h-7 text-indigo-600" />
-          My Profile
-        </h2>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Avatar and Stats */}
-        <Card className="lg:col-span-1 border-0 shadow-lg overflow-hidden">
-          <div className="h-32 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
-          <CardContent className="relative pt-12 text-center">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-              <Avatar className="w-24 h-24 border-4 border-white shadow-xl">
-                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-2xl">
-                  {student.username?.slice(0, 2).toUpperCase() || student.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-            <h3 className="text-xl font-bold text-gray-900">{student.name}</h3>
-            <p className="text-sm text-muted-foreground mb-4">@{student.username}</p>
-            
-            <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl">
-              <div>
-                <p className="text-xs text-muted-foreground uppercase font-semibold">Level</p>
-                <p className="text-lg font-bold text-indigo-600">{stats.level}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase font-semibold">Total EXP</p>
-                <p className="text-lg font-bold text-purple-600">{stats.totalEXP}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Right Column - Details and Edit */}
-        <Card className="lg:col-span-2 border-0 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Settings className="w-5 h-5 text-indigo-600" />
-              Account Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleUpdateProfile} className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    value={profileData.name}
-                    onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                    className="focus:ring-indigo-500"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    value={profileData.username}
-                    onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
-                    className="focus:ring-indigo-500"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    value={profileData.email}
-                    disabled
-                    className="bg-gray-50 text-muted-foreground"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="rollNumber">Roll Number</Label>
-                  <Input
-                    id="rollNumber"
-                    value={profileData.rollNumber}
-                    disabled
-                    className="bg-gray-50 text-muted-foreground"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="batch">Batch</Label>
-                  <Input
-                    id="batch"
-                    value={profileData.batch}
-                    onChange={(e) => setProfileData({ ...profileData, batch: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="class">Class</Label>
-                  <Input
-                    id="class"
-                    value={profileData.class}
-                    onChange={(e) => setProfileData({ ...profileData, class: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    value={profileData.phone}
-                    onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                  />
-                </div>
-              </div>
-              
-              <div className="flex justify-end pt-4">
-                <Button
-                  type="submit"
-                  disabled={isUpdatingProfile}
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md px-8"
-                >
-                  {isUpdatingProfile ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Saving...
-                    </div>
-                  ) : 'Save Changes'}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-
-  // Filter tasks into Ongoing and Completed
   const sortedTasks = [...tasks].sort((a, b) => {
     if (a.completed !== b.completed) return a.completed ? 1 : -1;
     return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
   });
 
-  const ongoingTasks = sortedTasks.filter(t => {
-    const isGraded = grades.some(g => g.taskId === t.id || g.task_id === t.id || g.assignment === t.title);
+  const ongoingTasks = sortedTasks.filter((t) => {
+    const isGraded = grades.some(
+      (g) => g.taskId === t.id || g.task_id === t.id || g.assignment === t.title,
+    );
     return !t.completed && !isGraded;
   });
 
-  const completedTasks = sortedTasks.filter(t => {
-    const isGraded = grades.some(g => g.taskId === t.id || g.task_id === t.id || g.assignment === t.title);
+  const completedTasks = sortedTasks.filter((t) => {
+    const isGraded = grades.some(
+      (g) => g.taskId === t.id || g.task_id === t.id || g.assignment === t.title,
+    );
     return t.completed || isGraded;
   });
 
@@ -580,145 +608,81 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
               )}
             </Button>
             <Avatar className="w-9 h-9 border-2 border-white shadow-lg">
-              <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-orange-500 text-white font-bold text-sm">
-                {student.username?.slice(0, 2).toUpperCase() || student.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+              <AvatarFallback className="bg-indigo-500 text-white text-xs font-bold">
+                {profileData.name?.slice(0, 2).toUpperCase() || "ST"}
               </AvatarFallback>
             </Avatar>
           </div>
         </div>
       </div>
 
-      {/* Desktop Header */}
-      <div className="hidden lg:block bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-xl">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
-                <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-orange-500 text-white font-bold text-lg">
-                  {student.username?.slice(0, 2).toUpperCase() || student.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h1 className="text-xl font-bold">{student.name}</h1>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-white/80 text-sm">@{student.username}</p>
-                  <span className="text-white/60">•</span>
-                  <p className="text-white/80 text-sm">Roll: {student.rollNumber}</p>
-                  {assignedClass && (
-                    <>
-                      <span className="text-white/60">•</span>
-                      <Badge className="bg-white/20 text-white border-white/30 text-xs">
-                        {assignedClass.className}
-                      </Badge>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowNotifications(true)}
-                className="text-white hover:bg-white/20 relative"
-              >
-                <Bell className="w-5 h-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                    {unreadCount}
-                  </span>
-                )}
-              </Button>
-              <Badge className="bg-white/20 text-white border-white/30 px-3 py-1">
-                <Trophy className="w-4 h-4 mr-1" />
-                Level {stats.level}
-              </Badge>
-              <Badge className="bg-white/20 text-white border-white/30 px-3 py-1">
-                <Zap className="w-4 h-4 mr-1" />
-                {stats.totalEXP} EXP
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex">
+      <div className="flex h-screen overflow-hidden">
         {/* Sidebar */}
-        <div className={`
-          fixed lg:sticky top-0 left-0 h-screen bg-white shadow-2xl z-40
-          transition-transform duration-300 ease-in-out
-          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          w-64 lg:w-72
-        `}>
-          {/* Sidebar Header */}
-          <div className="p-6 bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <GraduationCap className="w-8 h-8" />
-                <span className="font-bold text-lg">Student Portal</span>
+        <div
+          className={`${
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } lg:translate-x-0 fixed lg:relative z-40 w-72 h-full bg-white shadow-2xl transition-transform duration-300 ease-in-out border-r border-indigo-100 flex flex-col`}
+        >
+          <div className="p-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-white/20 rounded-lg backdrop-blur-md">
+                <GraduationCap className="w-8 h-8 text-white" />
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsSidebarOpen(false)}
-                className="lg:hidden text-white hover:bg-white/20"
-              >
-                <X className="w-5 h-5" />
-              </Button>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight">Student Portal</h1>
+                <p className="text-indigo-100 text-xs opacity-80">
+                  Dental College Management
+                </p>
+              </div>
             </div>
-            
-            {/* Student Info in Sidebar */}
-            <div className="flex items-center gap-3 p-3 bg-white/10 rounded-lg backdrop-blur-sm">
+
+            <div className="flex items-center gap-4 bg-white/10 p-4 rounded-xl backdrop-blur-md border border-white/10">
               <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
-                <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-orange-500 text-white font-bold">
-                  {student.username?.slice(0, 2).toUpperCase() || student.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                <AvatarFallback className="bg-indigo-500 text-white font-bold">
+                  {profileData.name?.slice(0, 2).toUpperCase() || "ST"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate">{student.name}</p>
-                <p className="text-xs text-white/80 truncate">@{student.username}</p>
-                <p className="text-xs text-white/80">Roll: {student.rollNumber}</p>
+                <p className="font-bold text-sm truncate">{profileData.name}</p>
+                <p className="text-xs text-indigo-100 opacity-80 truncate">
+                  Level {stats.level} Student
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Sidebar Navigation */}
-          <ScrollArea className="h-[calc(100vh-280px)]">
-            <nav className="p-4 space-y-2">
-              {sidebarItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeView === item.id;
-                
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveView(item.id);
-                      setIsSidebarOpen(false);
-                    }}
-                    className={`
-                      w-full flex items-center gap-3 px-4 py-3 rounded-lg
-                      transition-all duration-200
-                      ${isActive 
-                        ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg' 
-                        : 'text-gray-700 hover:bg-gray-100'
-                      }
-                    `}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium flex-1 text-left">{item.label}</span>
-                  </button>
-                );
-              })}
+          <div className="flex-1 p-4 overflow-y-auto">
+            <nav className="space-y-2">
+              {sidebarItems.map((item) => (
+                <Button
+                  key={item.id}
+                  variant={activeView === item.id ? "secondary" : "ghost"}
+                  className={`w-full justify-start gap-3 h-12 rounded-xl text-sm font-medium transition-all ${
+                    activeView === item.id
+                      ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100"
+                      : "text-gray-600 hover:bg-indigo-50/50 hover:text-indigo-600"
+                  }`}
+                  onClick={() => {
+                    setActiveView(item.id);
+                    setIsSidebarOpen(false);
+                  }}
+                >
+                  <item.icon
+                    className={`w-5 h-5 ${
+                      activeView === item.id ? "text-indigo-600" : "text-gray-400"
+                    }`}
+                  />
+                  {item.label}
+                </Button>
+              ))}
             </nav>
-          </ScrollArea>
+          </div>
 
-          {/* Sidebar Footer - Logout */}
-          <div className="p-4 border-t absolute bottom-0 left-0 right-0 bg-white">
+          <div className="p-4 border-t border-gray-100">
             <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 h-12 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl"
               onClick={onLogout}
-              variant="outline"
-              className="w-full justify-start gap-3 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
             >
               <LogOut className="w-5 h-5" />
               Logout
@@ -726,674 +690,810 @@ export function StudentDashboard({ student, onLogout, accessToken, projectId }) 
           </div>
         </div>
 
-        {/* Overlay for mobile */}
-        {isSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
-
         {/* Main Content */}
         <div className="flex-1 overflow-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
             {/* Profile Content if active */}
-            {activeView === 'profile' && <ProfileView />}
+            {activeView === 'profile' && (
+              <ProfileView 
+                profileData={profileData} 
+                stats={stats} 
+                setProfileData={setProfileData} 
+                isUpdatingProfile={isUpdatingProfile} 
+                handleUpdateProfile={handleUpdateProfile} 
+                student={student}
+              />
+            )}
 
             {/* Admin Broadcast Message - only show on dashboard */}
-            {activeView === 'dashboard' && adminMessage && (
-              <Alert className="mb-6 border-2 border-indigo-500 bg-gradient-to-r from-indigo-50 to-purple-50">
-                <MessageSquare className="h-5 w-5 text-indigo-600" />
-                <AlertDescription className="ml-2">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-semibold text-indigo-900 mb-1">Admin Message</p>
-                      <p className="text-sm text-indigo-700">{adminMessage.message}</p>
-                      <p className="text-xs text-indigo-500 mt-1">
-                        {new Date(adminMessage.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setAdminMessage(null)}
-                      className="text-indigo-600 hover:text-indigo-700"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
+            {activeView === "dashboard" && adminMessage && (
+              <Alert className="mb-8 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 shadow-md animate-in slide-in-from-top-4 duration-500">
+                <Info className="h-5 w-5 text-amber-600" />
+                <AlertDescription className="text-amber-800 ml-2">
+                  <span className="font-bold block mb-1 uppercase text-xs tracking-wider">
+                    Message from Administration
+                  </span>
+                  {adminMessage}
                 </AlertDescription>
               </Alert>
             )}
 
-            {/* Dashboard View */}
-            {activeView === 'dashboard' && (
-              <>
-                {/* Daily Quest */}
-                {dailyQuest && (
-                  <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-400 via-orange-500 to-pink-500 text-white mb-6 overflow-hidden relative">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
-                    <CardContent className="p-6 relative z-10">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                            <Sparkles className="w-6 h-6 text-white" />
-                          </div>
-                          <div>
-                            <h3 className="text-2xl font-bold text-white">Quest of the Day!</h3>
-                            <p className="text-white/90 text-sm">Complete for bonus rewards</p>
-                          </div>
+            {/* View Content based on activeView */}
+            {activeView === "dashboard" && (
+              <div className="space-y-8 animate-in fade-in duration-500">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                  <Card className="border-0 shadow-lg bg-gradient-to-br from-indigo-500 to-indigo-700 text-white overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                    <CardContent className="p-6 relative">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-indigo-100 text-xs font-bold uppercase tracking-widest mb-1">
+                            Current Level
+                          </p>
+                          <h3 className="text-3xl font-black italic">
+                            LVL {stats.level}
+                          </h3>
                         </div>
-                        <Badge className="bg-white/20 backdrop-blur-sm text-white border-white/30 px-3 py-1">
-                          <Zap className="w-4 h-4 mr-1" />
-                          +{dailyQuest.points} pts
-                        </Badge>
+                        <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+                          <Trophy className="w-6 h-6" />
+                        </div>
                       </div>
-                      
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4">
-                        <h4 className="font-bold text-lg mb-2">{dailyQuest.title}</h4>
-                        <p className="text-white/90 text-sm leading-relaxed">{dailyQuest.description}</p>
+                      <div className="mt-6">
+                        <div className="flex justify-between text-xs mb-2">
+                          <span>Progress to LVL {stats.level + 1}</span>
+                          <span>{Math.round((stats.currentLevelEXP / stats.nextLevelEXP) * 100)}%</span>
+                        </div>
+                        <Progress
+                          value={(stats.currentLevelEXP / stats.nextLevelEXP) * 100}
+                          className="h-2 bg-white/20"
+                        />
                       </div>
+                    </CardContent>
+                  </Card>
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 text-sm text-white/90">
-                          <span className="flex items-center gap-1">
-                            <User className="w-4 h-4" />
-                            {dailyQuest.teacherName}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {new Date(dailyQuest.date).toLocaleDateString()}
+                  <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-500 to-purple-700 text-white overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-purple-100 text-xs font-bold uppercase tracking-widest mb-1">
+                            Total Experience
+                          </p>
+                          <h3 className="text-3xl font-black italic">
+                            {stats.totalEXP} XP
+                          </h3>
+                        </div>
+                        <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+                          <Star className="w-6 h-6" />
+                        </div>
+                      </div>
+                      <p className="text-xs text-purple-100 mt-6 font-medium">
+                        Keep going to reach the next level!
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-0 shadow-lg bg-gradient-to-br from-pink-500 to-rose-600 text-white overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-rose-100 text-xs font-bold uppercase tracking-widest mb-1">
+                            Learning Streak
+                          </p>
+                          <h3 className="text-3xl font-black italic">
+                            {stats.streak} DAYS
+                          </h3>
+                        </div>
+                        <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md animate-pulse">
+                          <Flame className="w-6 h-6" />
+                        </div>
+                      </div>
+                      <p className="text-xs text-rose-100 mt-6 font-medium">
+                        Fantastic! Consistency is the key to success.
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-emerald-100 text-xs font-bold uppercase tracking-widest mb-1">
+                            Tasks Completed
+                          </p>
+                          <h3 className="text-3xl font-black italic">
+                            {stats.completedAssignments}/{stats.totalAssignments}
+                          </h3>
+                        </div>
+                        <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+                          <CheckCircle2 className="w-6 h-6" />
+                        </div>
+                      </div>
+                      <div className="mt-6">
+                        <div className="flex justify-between text-xs mb-2">
+                          <span>Total Completion Rate</span>
+                          <span>
+                            {stats.totalAssignments > 0
+                              ? Math.round((stats.completedAssignments / stats.totalAssignments) * 100)
+                              : 0}%
                           </span>
                         </div>
-                        <Button
-                          onClick={() => setShowDailyQuestDialog(true)}
-                          className="bg-white text-orange-600 hover:bg-white/90 font-semibold"
-                        >
-                          View Details
-                        </Button>
+                        <Progress
+                          value={
+                            stats.totalAssignments > 0
+                              ? (stats.completedAssignments / stats.totalAssignments) * 100
+                              : 0
+                          }
+                          className="h-2 bg-white/20"
+                        />
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Stats Overview */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-                  <Card className="border-0 shadow-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white overflow-hidden relative">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
-                    <CardContent className="p-4 sm:p-6 relative z-10">
-                      <Trophy className="w-6 h-6 sm:w-8 sm:h-8 mb-2" />
-                      <span className="text-2xl sm:text-3xl font-bold block">Lv. {stats.level}</span>
-                      <p className="text-white/90 text-xs sm:text-sm mb-2">Current Level</p>
-                      <Progress value={(stats.currentLevelEXP / stats.nextLevelEXP) * 100} className="h-1.5 sm:h-2 bg-white/20" />
-                      <p className="text-[10px] sm:text-xs text-white/80 mt-1">{stats.currentLevelEXP}/{stats.nextLevelEXP} EXP</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-0 shadow-xl bg-gradient-to-br from-yellow-400 to-orange-500 text-white overflow-hidden relative">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
-                    <CardContent className="p-4 sm:p-6 relative z-10">
-                      <Zap className="w-6 h-6 sm:w-8 sm:h-8 mb-2" />
-                      <span className="text-2xl sm:text-3xl font-bold block">{stats.totalEXP}</span>
-                      <p className="text-white/90 text-xs sm:text-sm">Total EXP</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-0 shadow-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white overflow-hidden relative">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
-                    <CardContent className="p-4 sm:p-6 relative z-10">
-                      <Flame className="w-6 h-6 sm:w-8 sm:h-8 mb-2" />
-                      <span className="text-2xl sm:text-3xl font-bold block">{stats.streak}</span>
-                      <p className="text-white/90 text-xs sm:text-sm">Day Streak</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-0 shadow-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white overflow-hidden relative">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
-                    <CardContent className="p-4 sm:p-6 relative z-10">
-                      <CheckCircle2 className="w-6 h-6 sm:w-8 sm:h-8 mb-2" />
-                      <span className="text-2xl sm:text-3xl font-bold block">{stats.completedAssignments}/{stats.totalAssignments}</span>
-                      <p className="text-white/90 text-xs sm:text-sm">Completed</p>
                     </CardContent>
                   </Card>
                 </div>
 
-                {/* Online Submission Section */}
-                <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 text-white mb-6 overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
-                  <CardContent className="p-6 relative z-10">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                          <Upload className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-2xl font-bold text-white">Online Submission</h3>
-                          <p className="text-white/90 text-sm">Submit your assignments online</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4">
-                      <p className="text-white/90 text-sm leading-relaxed mb-2">
-                        Can't attend college? No problem! Submit your physical assignments online through our submission portal.
-                      </p>
-                      <p className="text-white/80 text-xs">
-                        Teachers can review your submissions and provide feedback digitally.
-                      </p>
-                    </div>
-
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Recent Tasks */}
+                  <div className="lg:col-span-2 space-y-6">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm text-white/90">
-                        <Info className="w-4 h-4" />
-                        <span>Quick & Easy Submission</span>
-                      </div>
+                      <h3 className="text-xl font-black text-gray-800 flex items-center gap-2">
+                        <ListTodo className="w-6 h-6 text-indigo-600" />
+                        ONGOING TASKS
+                      </h3>
                       <Button
-                        onClick={() => window.open('https://docs.google.com/forms/d/e/1FAIpQLSc_q8vpENuHS4uDXPWVlsdy-fAI_wFbZdOCSOz7rLm2DTalrA/viewform?usp=dialog', '_blank')}
-                        className="bg-white text-cyan-600 hover:bg-white/90 font-semibold"
+                        variant="link"
+                        className="text-indigo-600 font-bold"
+                        onClick={() => setActiveView("tasks")}
                       >
-                        <Upload className="w-4 h-4 mr-2" />
-                        Submit Online
-                        <ExternalLink className="w-4 h-4 ml-2" />
+                        View All Tasks →
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
 
-                {/* Dashboard Summary Boxes */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                  {/* Ongoing Tasks */}
-                  <Card className="border-0 shadow-lg">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                        <ListTodo className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-                        Ongoing Tasks
-                      </CardTitle>
-                    </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="h-[300px] sm:h-[350px]">
-                      {ongoingTasks.length === 0 ? (
-                        <div className="text-center py-12 text-muted-foreground">
-                          <CheckCircle2 className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                          <p className="text-sm">No pending tasks</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {ongoingTasks.map((task) => (
-                            <div key={task.id} className="p-3 sm:p-4 rounded-lg border bg-white hover:shadow-md transition-shadow">
-                              <div className="flex items-start justify-between mb-2">
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-medium text-sm sm:text-base truncate">{task.title}</h4>
-                                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{task.description}</p>
-                                </div>
-                                <Badge className={`${getPriorityColor(task.priority)} border ml-2 text-xs`}>
-                                  {task.priority}
-                                </Badge>
-                              </div>
-                              <div className="flex items-center justify-between text-xs sm:text-sm mt-3">
-                                <div className="flex items-center gap-1 text-muted-foreground">
-                                  <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                                  <span className="text-xs">{new Date(task.dueDate).toLocaleDateString()}</span>
-                                </div>
-                                {task.type === 'quiz' && (
-                                  <Button
-                                    size="sm"
-                                    onClick={() => startQuiz(task)}
-                                    className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 h-7 text-xs"
-                                  >
-                                    Start Quiz
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </ScrollArea>
-                  </CardContent>
-                  </Card>
-
-                  {/* Recently Assigned Grades */}
-                  <Card className="border-0 shadow-lg">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                        <Award className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-                        Recently Assigned Grades
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ScrollArea className="h-[300px] sm:h-[350px]">
-                        {grades.length === 0 ? (
-                          <div className="text-center py-12 text-muted-foreground">
-                            <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                            <p className="text-sm">No grades yet</p>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            {grades.slice(0, 10).map((grade) => {
-                              const badge = getGradeBadge(grade.score, grade.maxScore, grade.grade);
-                              const expGained = grade.grade ? (
-                                { 'A+': 100, 'A': 95, 'A-': 90, 'B+': 85, 'B': 80, 'B-': 75, 'C+': 70, 'C': 65, 'C-': 60, 'D': 50, 'F': 0 }[grade.grade] || 0
-                              ) : Math.floor((grade.score / grade.maxScore) * 100);
-                              return (
-                                <div key={grade.id} className="p-3 sm:p-4 rounded-lg bg-gradient-to-r from-gray-50 to-white border hover:shadow-md transition-shadow">
-                                  <div className="flex items-start justify-between mb-2">
-                                    <div className="flex-1 min-w-0">
-                                      <h4 className="font-medium text-sm sm:text-base truncate">{grade.assignment}</h4>
-                                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{grade.subject || 'Academic'}</p>
-                                    </div>
-                                    <Badge className={`bg-gradient-to-r ${badge.color} text-white border-0 shadow-sm ml-2`}>
-                                      {badge.label}
-                                    </Badge>
-                                  </div>
-                                  <div className="flex items-center justify-between text-xs sm:text-sm">
-                                    <span className="text-muted-foreground">
-                                      {grade.score != null && grade.maxScore ? (
-                                        `${grade.score}/${grade.maxScore} (${((grade.score / grade.maxScore) * 100).toFixed(0)}%)`
-                                      ) : 'Graded'}
-                                    </span>
-                                    <div className="flex items-center gap-1 text-yellow-600 font-medium">
-                                      <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
-                                      +{expGained}
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </ScrollArea>
-                    </CardContent>
-                  </Card>
-                </div>
-              </>
-            )}
-
-            {/* Grades View */}
-            {activeView === 'grades' && (
-              <Card className="border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                    <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-                    All Grades
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {grades.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                      <p className="text-base sm:text-lg mb-2">No grades yet</p>
-                      <p className="text-xs sm:text-sm">Your grades will appear here once your teacher assigns them</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {grades.map((grade) => {
-                        const badge = getGradeBadge(grade.score, grade.maxScore, grade.grade);
-                        const expGained = grade.grade ? (
-                          { 'A+': 100, 'A': 95, 'A-': 90, 'B+': 85, 'B': 80, 'B-': 75, 'C+': 70, 'C': 65, 'C-': 60, 'D': 50, 'F': 0 }[grade.grade] || 0
-                        ) : Math.floor((grade.score / grade.maxScore) * 100);
-                        return (
-                          <div key={grade.id} className="p-4 sm:p-6 rounded-xl bg-gradient-to-r from-white to-gray-50 border shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-3 gap-3">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                                  <h3 className="text-base sm:text-lg font-semibold">{grade.assignment}</h3>
-                                  <Badge className={`bg-gradient-to-r ${badge.color} text-white border-0 shadow-sm px-2 sm:px-3`}>
-                                    Grade: {badge.label}
-                                  </Badge>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-                                  <span className="flex items-center gap-1">
-                                    <BookOpen className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    {grade.subject || 'Academic'}
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    {grade.date ? new Date(grade.date).toLocaleDateString() : 'N/A'}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="text-left sm:text-right">
-                                <div className="text-xl sm:text-2xl font-bold text-indigo-600 mb-1">
-                                  {grade.score != null && grade.maxScore ? (
-                                    `${grade.score}/${grade.maxScore}`
-                                  ) : badge.label}
-                                </div>
-                                {grade.score != null && grade.maxScore && (
-                                  <div className="text-xs sm:text-sm text-muted-foreground">
-                                    {((grade.score / grade.maxScore) * 100).toFixed(0)}%
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t">
-                              {grade.feedback ? (
-                                <p className="text-xs sm:text-sm text-muted-foreground italic flex-1">
-                                  <span className="font-medium">Feedback:</span> "{grade.feedback}"
-                                </p>
-                              ) : (
-                                <p className="text-xs sm:text-sm text-muted-foreground">No feedback provided</p>
-                              )}
-                              <div className="flex items-center gap-2 px-3 py-1 bg-yellow-50 rounded-full border border-yellow-200 w-fit">
-                                <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-600" />
-                                <span className="text-xs sm:text-sm font-semibold text-yellow-700">+{expGained} EXP</span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Tasks View */}
-            {activeView === 'tasks' && (
-              <div className="space-y-6">
-                {/* Daily Quest in Tasks View */}
-                {dailyQuest && (
-                  <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-400 via-orange-500 to-pink-500 text-white overflow-hidden relative">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
-                    <CardContent className="p-6 relative z-10">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                            <Sparkles className="w-6 h-6 text-white" />
-                          </div>
-                          <div>
-                            <h3 className="text-2xl font-bold text-white">Quest of the Day!</h3>
-                            <p className="text-white/90 text-sm">Complete for bonus rewards</p>
-                          </div>
-                        </div>
-                        <Badge className="bg-white/20 backdrop-blur-sm text-white border-white/30 px-3 py-1">
-                          <Zap className="w-4 h-4 mr-1" />
-                          +{dailyQuest.points} pts
-                        </Badge>
-                      </div>
-                      
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4">
-                        <h4 className="font-bold text-lg mb-2">{dailyQuest.title}</h4>
-                        <p className="text-white/90 text-sm leading-relaxed">{dailyQuest.description}</p>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 text-sm text-white/90">
-                          <span className="flex items-center gap-1">
-                            <User className="w-4 h-4" />
-                            {dailyQuest.teacherName}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {new Date(dailyQuest.date).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Regular Tasks */}
-                <Card className="border-0 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                      <ListTodo className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-                      My Tasks & Quizzes
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {sortedTasks.length === 0 ? (
-                      <div className="text-center py-12 text-muted-foreground">
-                        <ListTodo className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                        <p className="text-base sm:text-lg mb-2">No tasks assigned</p>
-                        <p className="text-xs sm:text-sm">Your assignments will appear here</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {sortedTasks.map((task) => (
-                          <div 
-                            key={task.id} 
-                            className={`p-4 sm:p-6 rounded-xl border shadow-sm hover:shadow-md transition-all ${
-                              task.completed 
-                                ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' 
-                                : 'bg-white'
-                            }`}
+                    {ongoingTasks.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {ongoingTasks.slice(0, 4).map((task) => (
+                          <Card
+                            key={task.id}
+                            className="border-0 shadow-md hover:shadow-xl transition-shadow overflow-hidden group"
                           >
-                            <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-3 gap-3">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex flex-wrap items-center gap-2 mb-2">
-                                  <h3 className={`text-base sm:text-lg font-semibold ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
-                                    {task.title}
-                                  </h3>
-                                  {task.type === 'quiz' && (
-                                    <Badge className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0 text-xs">
-                                      <Clock className="w-3 h-3 mr-1" />
-                                      Quiz - {task.duration} min
-                                    </Badge>
-                                  )}
-                                  <Badge className={`${getPriorityColor(task.priority)} border text-xs`}>
-                                    {task.priority}
-                                  </Badge>
-                                  {task.completed && (
-                                    <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 text-xs">
-                                      <CheckCircle2 className="w-3 h-3 mr-1" />
-                                      Completed
-                                    </Badge>
-                                  )}
-                                </div>
-                                <p className="text-xs sm:text-sm text-muted-foreground mb-3">{task.description}</p>
-                                <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-                                  <span className="flex items-center gap-1">
-                                    <BookOpen className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    {task.subject}
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    {new Date(task.dueDate).toLocaleDateString()}
-                                  </span>
-                                  <span className="flex items-center gap-1">
-                                    <Target className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    {task.totalPoints || task.maxPoints} points
-                                  </span>
-                                </div>
+                            <div
+                              className={`h-1.5 w-full bg-gradient-to-r ${
+                                task.type === "quiz"
+                                  ? "from-purple-500 to-indigo-500"
+                                  : "from-blue-500 to-indigo-500"
+                              }`}
+                            />
+                            <CardContent className="p-5">
+                              <div className="flex justify-between items-start mb-3">
+                                <Badge className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-100 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                  {task.type === "quiz" ? "QUIZ" : "TASK"}
+                                </Badge>
+                                <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  DUE {new Date(task.dueDate).toLocaleDateString()}
+                                </span>
                               </div>
-                              {!task.completed && task.type === 'quiz' && (
+                              <h4 className="font-bold text-gray-900 line-clamp-1 mb-1 group-hover:text-indigo-600 transition-colors">
+                                {task.title}
+                              </h4>
+                              <p className="text-xs text-gray-500 line-clamp-2 mb-4 h-8">
+                                {task.description || "No description provided."}
+                              </p>
+                              <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
+                                <div className="flex items-center gap-1 text-amber-600">
+                                  <Zap className="w-3 h-3 fill-current" />
+                                  <span className="text-xs font-black">
+                                    {task.maxPoints || 100} XP
+                                  </span>
+                                </div>
                                 <Button
-                                  onClick={() => startQuiz(task)}
-                                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 w-full sm:w-auto"
+                                  size="sm"
+                                  className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-4 text-xs font-bold shadow-md"
+                                  onClick={() => {
+                                    if (task.type === "quiz") startQuiz(task);
+                                    else setActiveView("tasks");
+                                  }}
                                 >
-                                  <Clock className="w-4 h-4 mr-2" />
-                                  Start Quiz
+                                  {task.type === "quiz" ? "Start Quiz" : "Details"}
                                 </Button>
-                              )}
-                            </div>
-                          </div>
+                              </div>
+                            </CardContent>
+                          </Card>
                         ))}
                       </div>
+                    ) : (
+                      <Card className="border-2 border-dashed border-gray-200 bg-gray-50/50">
+                        <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+                          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                            <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                          </div>
+                          <h4 className="text-lg font-bold text-gray-900">
+                            All Caught Up!
+                          </h4>
+                          <p className="text-gray-500 max-w-xs mt-2 text-sm">
+                            You've completed all your ongoing tasks. Take a well-deserved
+                            break or review your grades!
+                          </p>
+                        </CardContent>
+                      </Card>
                     )}
+                  </div>
+
+                  {/* Sidebar - Quick Access */}
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-black text-gray-800 flex items-center gap-2">
+                      <Zap className="w-6 h-6 text-amber-500" />
+                      QUICK ACCESS
+                    </h3>
+
+                    <Card className="border-0 shadow-lg overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-700 text-white">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-4 mb-6">
+                          <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
+                            <TrendingUp className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <h4 className="font-bold leading-tight">My Performance</h4>
+                            <p className="text-indigo-100 text-xs opacity-80">
+                              Based on last 5 assignments
+                            </p>
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-end">
+                            <span className="text-xs font-medium text-indigo-100">
+                              Average Score
+                            </span>
+                            <span className="text-xl font-black italic">
+                              {grades.length > 0
+                                ? Math.round(
+                                    grades.reduce((a, b) => a + (b.score || 0), 0) /
+                                      grades.length,
+                                  )
+                                : 0}%
+                            </span>
+                          </div>
+                          <Progress
+                            value={
+                              grades.length > 0
+                                ? grades.reduce((a, b) => a + (b.score || 0), 0) /
+                                  grades.length
+                                : 0
+                            }
+                            className="h-1.5 bg-white/20"
+                          />
+                        </div>
+                        <Button
+                          variant="secondary"
+                          className="w-full mt-6 bg-white text-indigo-700 hover:bg-indigo-50 font-bold rounded-xl h-11"
+                          onClick={() => setActiveView("grades")}
+                        >
+                          Full Report
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-0 shadow-lg bg-white">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-black text-gray-800 flex items-center gap-2">
+                          <Bell className="w-4 h-4 text-indigo-600" />
+                          LATEST NOTIFICATIONS
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        <div className="divide-y divide-gray-50">
+                          {notifications.slice(0, 3).map((notif) => (
+                            <div
+                              key={notif.id}
+                              className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                              onClick={() => markNotificationAsRead(notif.id)}
+                            >
+                              <p className="text-[10px] font-bold text-indigo-600 mb-1">
+                                {notif.type.toUpperCase()}
+                              </p>
+                              <h5 className="text-xs font-bold text-gray-900 leading-tight">
+                                {notif.title}
+                              </h5>
+                              <p className="text-[10px] text-gray-500 mt-1">
+                                {new Date(notif.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          ))}
+                          {notifications.length === 0 && (
+                            <div className="p-8 text-center">
+                              <p className="text-xs text-gray-400">No new notifications</p>
+                            </div>
+                          )}
+                        </div>
+                        {notifications.length > 0 && (
+                          <Button
+                            variant="ghost"
+                            className="w-full text-indigo-600 text-xs font-bold py-4 h-auto hover:bg-indigo-50 rounded-none border-t border-gray-50"
+                            onClick={() => setShowNotifications(true)}
+                          >
+                            View All Notifications
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeView === "grades" && (
+              <div className="space-y-8 animate-in fade-in duration-500">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-black text-gray-800 flex items-center gap-3">
+                    <BookOpen className="w-8 h-8 text-indigo-600" />
+                    MY ACADEMIC GRADES
+                  </h2>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-2xl shadow-sm border border-indigo-50">
+                    <p className="text-xs font-bold text-gray-500">AVG GRADE</p>
+                    <span className="text-lg font-black text-indigo-600">
+                      {grades.length > 0
+                        ? Math.round(
+                            grades.reduce((a, b) => a + (b.score || 0), 0) /
+                              grades.length,
+                          )
+                        : 0}%
+                    </span>
+                  </div>
+                </div>
+
+                <Card className="border-0 shadow-xl overflow-hidden bg-white">
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-slate-50 border-b border-gray-100">
+                          <tr>
+                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                              Assignment Name
+                            </th>
+                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                              Subject
+                            </th>
+                            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                              Date
+                            </th>
+                            <th className="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                              Score / Grade
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {grades.map((grade, index) => {
+                            const badge = getGradeBadge(
+                              grade.score,
+                              grade.maxScore,
+                              grade.grade,
+                            );
+                            return (
+                              <tr
+                                key={index}
+                                className="hover:bg-indigo-50/30 transition-colors group"
+                              >
+                                <td className="px-6 py-5">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                      {grade.assignment?.charAt(0) || "A"}
+                                    </div>
+                                    <span className="font-bold text-gray-900">
+                                      {grade.assignment}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-5">
+                                  <Badge
+                                    variant="outline"
+                                    className="border-indigo-100 text-indigo-600"
+                                  >
+                                    {grade.subject}
+                                  </Badge>
+                                </td>
+                                <td className="px-6 py-5 text-sm text-gray-500 font-medium">
+                                  {new Date(grade.date).toLocaleDateString()}
+                                </td>
+                                <td className="px-6 py-5 text-right">
+                                  <div className="flex flex-col items-end">
+                                    <span
+                                      className={`text-lg font-black bg-gradient-to-r ${badge.color} bg-clip-text text-transparent`}
+                                    >
+                                      {grade.score !== undefined
+                                        ? `${grade.score}/${grade.maxScore}`
+                                        : grade.grade}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-gray-400">
+                                      LEVEL {Math.floor((grade.score || 0) / 10)} REWARD
+                                    </span>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          {grades.length === 0 && (
+                            <tr>
+                              <td colSpan={4} className="px-6 py-20 text-center">
+                                <div className="max-w-xs mx-auto">
+                                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <FileText className="w-8 h-8 text-gray-300" />
+                                  </div>
+                                  <h4 className="text-gray-900 font-bold">
+                                    No grades found
+                                  </h4>
+                                  <p className="text-gray-500 text-xs mt-1">
+                                    You haven't received any grades yet. Complete your
+                                    tasks to see them here!
+                                  </p>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
             )}
 
-            {/* Leaderboard View */}
-            {activeView === 'leaderboard' && (
-              <Card className="border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                    <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600" />
-                    Leaderboard
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Trophy className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                    <p className="text-base sm:text-lg mb-2">Leaderboard Coming Soon</p>
-                    <p className="text-xs sm:text-sm">Rankings will be displayed here</p>
+            {activeView === "tasks" && (
+              <div className="space-y-8 animate-in fade-in duration-500">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <h2 className="text-2xl font-black text-gray-800 flex items-center gap-3">
+                    <ListTodo className="w-8 h-8 text-indigo-600" />
+                    TASKS & QUIZZES
+                  </h2>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      className="bg-white shadow-sm border border-indigo-50 rounded-xl px-6 font-bold text-indigo-600"
+                    >
+                      Filter by Subject
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+
+                {/* Task Categories */}
+                <div className="space-y-8">
+                  {/* Ongoing Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-indigo-600">
+                      <Zap className="w-5 h-5 fill-current" />
+                      <h3 className="font-black uppercase tracking-widest text-sm">
+                        Ongoing Assignments ({ongoingTasks.length})
+                      </h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {ongoingTasks.map((task) => (
+                        <Card
+                          key={task.id}
+                          className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 group overflow-hidden"
+                        >
+                          <div
+                            className={`h-2 bg-gradient-to-r ${
+                              task.type === "quiz"
+                                ? "from-purple-500 to-indigo-500"
+                                : "from-blue-500 to-indigo-500"
+                            }`}
+                          />
+                          <CardContent className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+                              <Badge className="bg-slate-100 text-slate-700 hover:bg-slate-200 border-0 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                {task.type || "TASK"}
+                              </Badge>
+                              <div
+                                className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${getPriorityColor(
+                                  task.priority,
+                                )}`}
+                              >
+                                {task.priority || "MEDIUM"}
+                              </div>
+                            </div>
+
+                            <h4 className="text-lg font-black text-gray-900 group-hover:text-indigo-600 transition-colors mb-2">
+                              {task.title}
+                            </h4>
+                            <p className="text-xs text-gray-500 line-clamp-2 h-8 mb-6">
+                              {task.description || "No additional details provided."}
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                              <div className="bg-slate-50 p-3 rounded-xl">
+                                <p className="text-[10px] font-black text-gray-400 uppercase mb-1">
+                                  Subject
+                                </p>
+                                <p className="text-xs font-bold text-gray-700 truncate">
+                                  {task.subject}
+                                </p>
+                              </div>
+                              <div className="bg-slate-50 p-3 rounded-xl">
+                                <p className="text-[10px] font-black text-gray-400 uppercase mb-1">
+                                  Deadline
+                                </p>
+                                <p className="text-xs font-bold text-gray-700">
+                                  {new Date(task.dueDate).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                              <div className="flex items-center gap-1.5 text-indigo-600">
+                                <div className="p-1.5 bg-indigo-50 rounded-lg">
+                                  <Zap className="w-3 h-3 fill-current" />
+                                </div>
+                                <span className="text-xs font-black">
+                                  {task.maxPoints || 100} XP
+                                </span>
+                              </div>
+                              <Button
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-black px-6 shadow-md h-10 text-xs"
+                                onClick={() => {
+                                  if (task.type === "quiz") startQuiz(task);
+                                  else markTaskAttempted(task.id);
+                                }}
+                              >
+                                {task.type === "quiz" ? "Take Quiz" : "Submit Work"}
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Completed Section */}
+                  {completedTasks.length > 0 && (
+                    <div className="space-y-4 pt-8">
+                      <div className="flex items-center gap-2 text-emerald-600">
+                        <CheckCircle2 className="w-5 h-5" />
+                        <h3 className="font-black uppercase tracking-widest text-sm">
+                          Completed Assignments ({completedTasks.length})
+                        </h3>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {completedTasks.map((task) => {
+                          const grade = grades.find(
+                            (g) => g.taskId === task.id || g.task_id === task.id,
+                          );
+                          return (
+                            <Card
+                              key={task.id}
+                              className="border-0 shadow-md bg-white/60 opacity-80"
+                            >
+                              <CardContent className="p-6">
+                                <div className="flex justify-between items-start mb-4">
+                                  <Badge className="bg-emerald-50 text-emerald-700 border-0 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                    COMPLETED
+                                  </Badge>
+                                  <div className="text-[10px] font-bold text-gray-400">
+                                    {new Date(
+                                      task.completedAt || task.dueDate,
+                                    ).toLocaleDateString()}
+                                  </div>
+                                </div>
+                                <h4 className="text-lg font-black text-gray-400 line-through mb-4">
+                                  {task.title}
+                                </h4>
+                                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 text-[10px] font-black">
+                                      {grade ? "A+" : "OK"}
+                                    </div>
+                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                                      {grade ? "Graded" : "Submitted"}
+                                    </p>
+                                  </div>
+                                  {grade && (
+                                    <span className="text-lg font-black text-indigo-600 italic">
+                                      {grade.score}%
+                                    </span>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeView === "leaderboard" && (
+              <div className="space-y-8 animate-in fade-in duration-500">
+                <div className="text-center max-w-2xl mx-auto space-y-4">
+                  <div className="inline-block p-3 bg-indigo-50 rounded-3xl mb-2">
+                    <Trophy className="w-12 h-12 text-indigo-600" />
+                  </div>
+                  <h2 className="text-4xl font-black text-gray-900 tracking-tight">
+                    STUDENT LEADERBOARD
+                  </h2>
+                  <p className="text-gray-500 font-medium">
+                    Top performers across all dental departments. Rank is based on
+                    total EXP earned from assignments and quizzes.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
+                  {/* Mock Leaderboard display - in real app, fetch from backend */}
+                  {[
+                    { rank: 2, name: "Dr. Aryan Sharma", xp: 4850, level: 12 },
+                    { rank: 1, name: student?.name, xp: stats.totalEXP, level: stats.level },
+                    { rank: 3, name: "Dr. Isha Patel", xp: 4200, level: 10 },
+                  ]
+                    .sort((a, b) => a.rank - b.rank)
+                    .map((user, idx) => (
+                      <Card
+                        key={idx}
+                        className={`border-0 shadow-xl relative overflow-hidden ${
+                          user.name === student?.name
+                            ? "bg-gradient-to-br from-indigo-600 to-purple-700 text-white scale-110 z-10"
+                            : "bg-white"
+                        }`}
+                      >
+                        <CardContent className="p-8 text-center">
+                          <div
+                            className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl font-black italic ${
+                              user.rank === 1
+                                ? "bg-amber-100 text-amber-600"
+                                : user.rank === 2
+                                  ? "bg-slate-100 text-slate-600"
+                                  : "bg-orange-50 text-orange-600"
+                            } ${user.name === student?.name ? "!bg-white/20 !text-white" : ""}`}
+                          >
+                            #{user.rank}
+                          </div>
+                          <Avatar className="w-20 h-20 border-4 border-white/20 shadow-xl mx-auto mb-4">
+                            <AvatarFallback className="bg-indigo-500 text-white text-xl font-bold">
+                              {user.name?.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <h4 className="text-xl font-black mb-1 truncate">
+                            {user.name}
+                          </h4>
+                          <p
+                            className={`text-xs font-bold uppercase tracking-widest mb-6 ${
+                              user.name === student?.name
+                                ? "text-indigo-100"
+                                : "text-gray-400"
+                            }`}
+                          >
+                            LEVEL {user.level}
+                          </p>
+                          <div
+                            className={`p-4 rounded-2xl ${
+                              user.name === student?.name
+                                ? "bg-white/10"
+                                : "bg-slate-50"
+                            }`}
+                          >
+                            <p
+                              className={`text-[10px] font-black uppercase tracking-widest ${
+                                user.name === student?.name
+                                  ? "text-indigo-100"
+                                  : "text-gray-400"
+                              }`}
+                            >
+                              Current EXP
+                            </p>
+                            <p className="text-2xl font-black italic">
+                              {user.xp} <span className="text-xs not-italic">XP</span>
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Daily Quest Dialog */}
-      <Dialog open={showDailyQuestDialog} onOpenChange={(open) => {
-        setShowDailyQuestDialog(open);
-        if (!open) {
-          markDailyQuestSeen();
-        }
-      }}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="text-2xl flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-yellow-500" />
-              Daily Quest!
+      {/* Notifications Dialog */}
+      <Dialog open={showNotifications} onOpenChange={setShowNotifications}>
+        <DialogContent className="max-w-md p-0 overflow-hidden border-0 shadow-2xl rounded-3xl">
+          <DialogHeader className="p-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+            <DialogTitle className="text-xl font-black flex items-center gap-2">
+              <Bell className="w-6 h-6" />
+              NOTIFICATIONS
             </DialogTitle>
-            <DialogDescription>
-              Complete today's challenge to earn bonus points
+            <DialogDescription className="text-indigo-100 opacity-80 font-medium">
+              You have {unreadCount} unread messages
             </DialogDescription>
           </DialogHeader>
-          
-          {dailyQuest && (
-            <div className="space-y-4 py-4">
-              <div className="p-4 rounded-lg bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300">
-                <h3 className="font-semibold text-lg mb-2 text-yellow-900">{dailyQuest.title}</h3>
-                <p className="text-sm text-yellow-800 mb-3">{dailyQuest.description}</p>
-                <div className="flex items-center gap-4 text-sm">
-                  <Badge className="bg-yellow-500 text-white border-0">
-                    <Zap className="w-3 h-3 mr-1" />
-                    +{dailyQuest.points} EXP
-                  </Badge>
-                  <span className="text-yellow-700">Due: {new Date(dailyQuest.dueDate).toLocaleDateString()}</span>
+          <div className="max-h-[60vh] overflow-y-auto">
+            {notifications.length > 0 ? (
+              <div className="divide-y divide-gray-50">
+                {notifications.map((notif) => (
+                  <div
+                    key={notif.id}
+                    className={`p-6 hover:bg-indigo-50/50 transition-colors cursor-pointer relative group ${
+                      !notif.read ? "bg-indigo-50/20" : ""
+                    }`}
+                    onClick={() => {
+                      markNotificationAsRead(notif.id);
+                      handleNotificationClick(notif);
+                    }}
+                  >
+                    {!notif.read && (
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600" />
+                    )}
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-2 py-0.5 rounded-full">
+                        {notif.type}
+                      </span>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">
+                        {new Date(notif.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <h5 className="font-bold text-gray-900 mb-1 group-hover:text-indigo-600 transition-colors">
+                      {notif.title}
+                    </h5>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      {notif.message}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-12 text-center">
+                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Bell className="w-8 h-8 text-gray-200" />
                 </div>
+                <p className="text-gray-400 font-bold">No notifications yet</p>
               </div>
-
-              <Button
-                onClick={() => {
-                  setShowDailyQuestDialog(false);
-                  markDailyQuestSeen();
-                }}
-                className="w-full bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white border-0"
-              >
-                Got it! Let's go 🚀
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Profile Edit Dialog */}
-      <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
-        <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl sm:text-2xl flex items-center gap-2">
-              <User className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
-              My Profile
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 sm:space-y-6 py-4">
-            {/* Avatar Section */}
-            <div className="flex items-center gap-4">
-              <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-indigo-200 shadow-lg">
-                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-xl sm:text-2xl">
-                  {student.username?.slice(0, 2).toUpperCase() || student.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-base sm:text-lg truncate">{student.name}</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">@{student.username}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">Roll: {student.rollNumber}</p>
-                <Badge className="mt-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0 text-xs">
-                  Level {stats.level} • {stats.totalEXP} EXP
-                </Badge>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Profile Info (Read-only fields) */}
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground">Username</Label>
-                  <p className="font-medium">@{student.username}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground">Roll Number</Label>
-                  <p className="font-medium">{student.rollNumber}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground">Batch</Label>
-                  <p className="font-medium">{student.batch}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground">Email</Label>
-                  <p className="font-medium text-sm truncate">{student.email}</p>
-                </div>
-              </div>
-
-              {assignedClass && (
-                <div className="p-4 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200">
-                  <h4 className="font-semibold mb-1 flex items-center gap-2 text-sm">
-                    <GraduationCap className="w-4 h-4 text-indigo-600" />
-                    Current Class
-                  </h4>
-                  <p className="text-sm text-indigo-900">{assignedClass.className}</p>
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
-            {/* Stats Summary */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
-              <div className="p-2 sm:p-3 rounded-lg bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 text-center">
-                <Trophy className="w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1 text-purple-600" />
-                <p className="text-xl sm:text-2xl font-bold text-purple-700">Lv. {stats.level}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Level</p>
-              </div>
-              <div className="p-2 sm:p-3 rounded-lg bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 text-center">
-                <Zap className="w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1 text-yellow-600" />
-                <p className="text-xl sm:text-2xl font-bold text-yellow-700">{stats.totalEXP}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">EXP</p>
-              </div>
-              <div className="p-2 sm:p-3 rounded-lg bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 text-center">
-                <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1 text-green-600" />
-                <p className="text-xl sm:text-2xl font-bold text-green-700">{stats.completedAssignments}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Done</p>
-              </div>
-            </div>
+            )}
           </div>
-
-          <div className="flex justify-end pt-4 border-t">
+          <div className="p-4 bg-gray-50 border-t border-gray-100">
             <Button
-              variant="outline"
-              onClick={() => setIsProfileDialogOpen(false)}
-              className="w-full sm:w-auto text-sm"
+              variant="ghost"
+              className="w-full text-indigo-600 font-black text-xs"
+              onClick={() => setShowNotifications(false)}
             >
-              Close
+              CLOSE
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Notifications Dropdown */}
-      <NotificationsDropdown
-        notifications={notifications}
-        isOpen={showNotifications}
-        onClose={() => setShowNotifications(false)}
-        onNotificationClick={handleNotificationClick}
-        onMarkAsRead={markNotificationAsRead}
-      />
+      {/* Daily Quest Dialog */}
+      <Dialog open={showDailyQuestDialog} onOpenChange={setShowDailyQuestDialog}>
+        <DialogContent className="max-w-md rounded-3xl border-0 shadow-2xl p-0 overflow-hidden">
+          <div className="h-24 bg-gradient-to-r from-amber-400 to-orange-500 flex items-center justify-center">
+            <Sparkles className="w-12 h-12 text-white" />
+          </div>
+          <div className="p-8 text-center space-y-4">
+            <h2 className="text-2xl font-black text-gray-900 uppercase italic">
+              New Task Assigned!
+            </h2>
+            <div className="bg-amber-50 p-6 rounded-2xl border-2 border-amber-100">
+              <h3 className="font-black text-amber-800 text-lg mb-2">
+                {dailyQuest?.title}
+              </h3>
+              <p className="text-sm text-amber-700 leading-relaxed">
+                {dailyQuest?.description}
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-2 text-amber-600 font-black italic">
+              <Zap className="w-5 h-5 fill-current" />
+              <span>WORTH {dailyQuest?.points} XP</span>
+            </div>
+            <Button
+              className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black h-12 rounded-2xl shadow-lg mt-4"
+              onClick={() => {
+                setShowDailyQuestDialog(false);
+                markDailyQuestSeen();
+                setActiveView("tasks");
+              }}
+            >
+              LET'S DO IT!
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

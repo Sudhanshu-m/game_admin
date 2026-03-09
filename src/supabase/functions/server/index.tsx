@@ -274,19 +274,24 @@ app.post("/make-server-2fad19e1/teacher/add-task", async (c) => {
     if (error || !user) return c.json({ error: "Unauthorized" }, 401);
 
     const body = await c.req.json();
-    const { title, description, points, date, class_id, type } = body;
+    console.log("Create task request body:", body);
+    const { title, description, points, date, class_id, type, subject, priority } = body;
 
     const task = {
       id: `task-${Date.now()}`,
       title,
       description,
       points: points || 50,
+      maxPoints: points || 50,
       type: type || "task",
       date: date || new Date().toISOString().split("T")[0],
       dueDate: date || new Date().toISOString().split("T")[0],
       classId: class_id,
+      subject: subject || "General",
+      priority: (priority || "Medium").toLowerCase(),
       teacherId: user.id,
       createdAt: new Date().toISOString(),
+      status: "active"
     };
 
     // Add to teacher's tasks list
@@ -294,38 +299,44 @@ app.post("/make-server-2fad19e1/teacher/add-task", async (c) => {
     const tasks = (await kv.get(tasksKey)) || [];
     tasks.push(task);
     await kv.set(tasksKey, tasks);
+    console.log("Task added to teacher list:", task.id);
 
-    // Assign to all students in the class
-    const allProfiles = await kv.getByPrefix({ prefix: ["student_profile:"] });
-    for await (const entry of allProfiles) {
-      const student = entry.value;
-      if (student && student.classId === class_id) {
-        const studentTasksKey = `student_tasks:${student.email}`;
-        const studentTasks = (await kv.get(studentTasksKey)) || [];
-        studentTasks.push({
-          ...task,
-          completed: false,
-          grade: null,
-        });
-        await kv.set(studentTasksKey, studentTasks);
+    // Assign to students in the class
+    // In this app, students are stored in students:teacherId
+    const studentsKey = `students:${user.id}`;
+    const teacherStudents = (await kv.get(studentsKey)) || [];
+    const classStudents = teacherStudents.filter(s => s.classId === class_id);
+    
+    console.log(`Assigning task to ${classStudents.length} students in class ${class_id}`);
 
-        // Notify student
-        const notifKey = `notifications:${student.email}`;
-        const notifs = (await kv.get(notifKey)) || [];
-        notifs.push({
-          id: `notif-${Date.now()}-${student.email}`,
-          type: "task",
-          title: `New Task: ${title}`,
-          message: description,
-          createdAt: new Date().toISOString(),
-          read: false,
-        });
-        await kv.set(notifKey, notifs);
-      }
+    for (const student of classStudents) {
+      const studentTasksKey = `student_tasks:${student.email}`;
+      const studentTasks = (await kv.get(studentTasksKey)) || [];
+      studentTasks.push({
+        ...task,
+        completed: false,
+        grade: null,
+      });
+      await kv.set(studentTasksKey, studentTasks);
+
+      // Notify student
+      const notifKey = `notifications:${student.email}`;
+      const notifs = (await kv.get(notifKey)) || [];
+      notifs.push({
+        id: `notif-${Date.now()}-${student.email}`,
+        type: "task",
+        title: `New Task: ${title}`,
+        message: description,
+        createdAt: new Date().toISOString(),
+        read: false,
+        taskId: task.id
+      });
+      await kv.set(notifKey, notifs);
     }
 
     return c.json({ success: true, task });
   } catch (error) {
+    console.log("Add task error:", error);
     return c.json({ error: error.message }, 500);
   }
 });

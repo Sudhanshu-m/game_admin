@@ -190,9 +190,9 @@ export function TasksAndQuizzesManagement({
   };
 
   const allTasks = [...(tasks || [])].sort((a, b) => {
-    // Sort by id (which contains timestamp) or createdAt newest first
-    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : parseInt(a.id.split('-')[1]) || 0;
-    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : parseInt(b.id.split('-')[1]) || 0;
+    // Sort by createdAt or id timestamp newest first
+    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : (typeof a.id === 'string' ? parseInt(a.id.split('-')[1]) || 0 : 0);
+    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : (typeof b.id === 'string' ? parseInt(b.id.split('-')[1]) || 0 : 0);
     return timeB - timeA;
   });
   const regularTasks = allTasks.filter((t) => t.type !== "quiz");
