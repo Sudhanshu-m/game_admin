@@ -222,8 +222,12 @@ app.post("/make-server-2fad19e1/teacher/grades", async (c) => {
     await kv.set(`task_grades:${taskId}`, grades);
 
     // Save to teacher's grades log
-    const gradesKey = `dental_college_grades:${user.id}`;
-    const allGrades = (await kv.get(gradesKey)) || [];
+    const teacherGradesKey = `dental_college_grades:${user.id}`;
+    const teacherGrades = (await kv.get(teacherGradesKey)) || [];
+    
+    // Also save to student's personal grades for quick access
+    const studentGradesKey = `student_grades:${studentEmail}`;
+    const studentGrades = (await kv.get(studentGradesKey)) || [];
     
     const tasks = (await kv.get(`tasks:${user.id}`)) || [];
     const task = tasks.find((t) => t.id === taskId);
@@ -233,19 +237,30 @@ app.post("/make-server-2fad19e1/teacher/grades", async (c) => {
       subject: task?.subject || "General",
       assignment: task?.title || "Assignment",
       taskId: taskId,
+      task_id: taskId,
       grade: grade,
+      score: grade,
+      maxScore: 100,
       date: new Date().toISOString().split("T")[0],
     };
 
-    const existingIndex = allGrades.findIndex(g => g.studentEmail === studentEmail && g.taskId === taskId);
-    if (existingIndex >= 0) {
-      allGrades[existingIndex] = gradeEntry;
+    const existingTeacherIndex = teacherGrades.findIndex(g => g.studentEmail === studentEmail && g.taskId === taskId);
+    if (existingTeacherIndex >= 0) {
+      teacherGrades[existingTeacherIndex] = gradeEntry;
     } else {
-      allGrades.push(gradeEntry);
+      teacherGrades.push(gradeEntry);
     }
-    await kv.set(gradesKey, allGrades);
+    await kv.set(teacherGradesKey, teacherGrades);
 
-    // Update student's task status
+    const existingStudentIndex = studentGrades.findIndex(g => g.taskId === taskId);
+    if (existingStudentIndex >= 0) {
+      studentGrades[existingStudentIndex] = gradeEntry;
+    } else {
+      studentGrades.push(gradeEntry);
+    }
+    await kv.set(studentGradesKey, studentGrades);
+
+    // Update student's task status to mark as completed
     const studentTasksKey = `student_tasks:${studentEmail}`;
     const studentTasks = (await kv.get(studentTasksKey)) || [];
     const updatedTasks = studentTasks.map(t => 
@@ -353,6 +368,45 @@ app.post("/make-server-2fad19e1/teacher/quest", async (c) => {
 });
 
 // --- STUDENT ENDPOINTS ---
+
+// Get student data with tasks, grades, and streak
+app.get("/make-server-2fad19e1/student/data", async (c) => {
+  try {
+    const accessToken = c.req.header("Authorization")?.split(" ")[1];
+    if (!accessToken) return c.json({ error: "Unauthorized" }, 401);
+
+    const supabase = getSupabaseClient(true);
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+    if (error || !user) return c.json({ error: "Unauthorized" }, 401);
+
+    // Get all data for the student
+    const allTasks = (await kv.get(`student_tasks:${user.email}`)) || [];
+    const gradesKey = `student_grades:${user.email}`;
+    const allGrades = (await kv.get(gradesKey)) || [];
+    const streakData = (await kv.get(`student_streak:${user.email}`)) || { currentStreak: 0, longestStreak: 0, dates: [] };
+    
+    // Mark tasks as completed if they have grades
+    const tasksWithCompletion = allTasks.map(task => {
+      const hasGrade = allGrades.some(grade => grade.taskId === task.id || grade.task_id === task.id);
+      return {
+        ...task,
+        completed: task.completed || hasGrade,
+        grade: allGrades.find(g => g.taskId === task.id || g.task_id === task.id)?.grade
+      };
+    });
+
+    return c.json({
+      tasks: tasksWithCompletion,
+      grades: allGrades,
+      streakData,
+      assignedClass: null,
+      adminMessage: null
+    });
+  } catch (error) {
+    console.log("Student data error:", error);
+    return c.json({ error: error.message }, 500);
+  }
+});
 
 app.get("/make-server-2fad19e1/student/dashboard", async (c) => {
   try {

@@ -383,12 +383,12 @@ export function StudentDashboard({
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* Sidebar */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar - Fixed on mobile, relative on desktop */}
         <div
           className={`${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } lg:translate-x-0 fixed lg:relative z-40 w-72 h-full bg-white shadow-2xl transition-transform duration-300 ease-in-out border-r border-indigo-100 flex flex-col`}
+          } lg:translate-x-0 fixed lg:static z-40 w-72 h-full bg-white shadow-2xl lg:shadow-none transition-transform duration-300 ease-in-out border-r border-indigo-100 flex flex-col`}
         >
           <div className="p-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white">
             <div className="flex items-center gap-3 mb-6">
