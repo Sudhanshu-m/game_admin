@@ -316,14 +316,17 @@ app.post("/make-server-2fad19e1/teacher/add-task", async (c) => {
     await kv.set(tasksKey, tasks);
     console.log("Task added to teacher list:", task.id);
 
-    // Assign to students in the class
-    // Correctly list all student profiles to find those in the class
+    // Assign to students in the class (or all if no class specified)
     let assignmentCount = 0;
     try {
       const allProfiles = kv.list({ prefix: ["student_profile:"] });
       for await (const entry of allProfiles) {
         const student = entry.value;
-        if (student && student.classId === class_id) {
+        // If class_id is specified, only assign to students in that class
+        // If class_id is null/undefined, assign to ALL students
+        const shouldAssign = !class_id || student?.classId === class_id;
+        
+        if (student && shouldAssign) {
           const studentTasksKey = `student_tasks:${student.email}`;
           const studentTasks = (await kv.get(studentTasksKey)) || [];
           studentTasks.push({
@@ -353,7 +356,7 @@ app.post("/make-server-2fad19e1/teacher/add-task", async (c) => {
       console.log("Error during student assignment loop:", e);
     }
     
-    console.log(`Assigned task to ${assignmentCount} students via profile scan`);
+    console.log(`Assigned task to ${assignmentCount} students${class_id ? ' in class ' + class_id : ' (all students)'}`);
 
     return c.json({ success: true, task, assignedCount: assignmentCount });
   } catch (error) {

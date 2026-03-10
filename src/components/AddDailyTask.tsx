@@ -36,6 +36,17 @@ export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated
     setLoading(true);
 
     try {
+      console.log('Creating task with:', {
+        title: taskTitle,
+        description: taskDescription,
+        points: parseInt(rewardPoints) || 100,
+        date: dueDate,
+        class_id: selectedClass?.id || null,
+        type: 'task',
+        subject: subject,
+        priority: priority,
+      });
+
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/add-task`,
         {
@@ -49,9 +60,9 @@ export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated
             description: taskDescription,
             points: parseInt(rewardPoints) || 100,
             date: dueDate,
-            class_id: selectedClass?.id,
+            class_id: selectedClass?.id || null,
             type: 'task',
-            subject: subject,
+            subject: subject || 'General',
             priority: priority,
           })
         }
@@ -59,7 +70,10 @@ export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated
 
       if (response.ok) {
         const data = await response.json();
-        toast.success('Task assigned to all students in the class!');
+        const assignMsg = selectedClass 
+          ? `Task assigned to all students in ${selectedClass.name}!`
+          : 'Task created successfully!';
+        toast.success(assignMsg);
         setTaskTitle('');
         setTaskDescription('');
         setDueDate('');
@@ -71,6 +85,7 @@ export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated
         onBack();
       } else {
         const errorData = await response.json();
+        console.error('Task creation error response:', errorData);
         toast.error('Failed to create task: ' + (errorData.error || 'Unknown error'));
       }
     } catch (error) {
@@ -99,14 +114,17 @@ export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated
         {/* Page Title */}
         <h1 className="text-3xl font-bold text-slate-900 mb-6 flex items-center gap-2">
           <Sparkles className="w-8 h-8 text-amber-500" />
-          Add Daily Task - {selectedClass?.name}
+          Add Daily Task {selectedClass && `- ${selectedClass.name}`}
         </h1>
 
         {/* Info Banner */}
         <Alert className="mb-6 border-0 bg-gradient-to-r from-amber-50 to-pink-50 shadow-sm">
           <AlertCircle className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-amber-900 ml-2">
-            This task will be automatically assigned to all students currently enrolled in {selectedClass?.name}. It will appear as a highlighted task card on their dashboard.
+            {selectedClass 
+              ? `This task will be automatically assigned to all students currently enrolled in ${selectedClass.name}.`
+              : 'This task will be assigned to all registered students.'}
+            {' '}It will appear as a highlighted task card on their dashboard.
           </AlertDescription>
         </Alert>
 
@@ -209,7 +227,9 @@ export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated
               <Alert className="border-l-4 border-l-amber-500 bg-amber-50">
                 <Sparkles className="h-4 w-4 text-amber-600" />
                 <AlertDescription className="text-amber-900 ml-2">
-                  <strong>Task Assignment:</strong> This task will be automatically assigned to all students currently enrolled in {selectedClass?.name}. It will appear as a highlighted task card on their dashboard!
+                  <strong>Task Assignment:</strong> {selectedClass 
+                    ? `This task will be automatically assigned to all students currently enrolled in ${selectedClass.name}.`
+                    : 'This task will be assigned to all registered students.'} It will appear as a highlighted task card on their dashboard!
                 </AlertDescription>
               </Alert>
             </div>
