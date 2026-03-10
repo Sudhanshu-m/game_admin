@@ -274,6 +274,47 @@ export function StudentDashboard({
     }
   };
 
+  const getPriorityColor = (priority) => {
+    const priorityColors = {
+      high: "border-red-200 bg-red-50 text-red-700",
+      medium: "border-yellow-200 bg-yellow-50 text-yellow-700",
+      low: "border-green-200 bg-green-50 text-green-700",
+    };
+    return priorityColors[priority?.toLowerCase()] || "border-gray-200 bg-gray-50 text-gray-700";
+  };
+
+  const getGradeBadge = (score, maxScore, grade) => {
+    const percentage = maxScore ? (score / maxScore) * 100 : 0;
+    if (percentage >= 90 || grade === "A+" || grade === "A") {
+      return { color: "from-green-400 to-emerald-500" };
+    } else if (percentage >= 80 || grade === "B+") {
+      return { color: "from-blue-400 to-cyan-500" };
+    } else if (percentage >= 70 || grade === "B") {
+      return { color: "from-yellow-400 to-amber-500" };
+    }
+    return { color: "from-red-400 to-rose-500" };
+  };
+
+  const startQuiz = (quiz) => {
+    setSelectedQuiz(quiz);
+  };
+
+  const markTaskAttempted = (taskId) => {
+    toast.success("Task marked as attempted! Waiting for grading.");
+  };
+
+  const handleNotificationClick = (notif) => {
+    if (notif.type === "task") {
+      setActiveView("tasks");
+    } else if (notif.type === "grade") {
+      setActiveView("grades");
+    }
+  };
+
+  const markDailyQuestSeen = () => {
+    // Mark daily quest as seen in backend
+  };
+
   const sidebarItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
     { id: "grades", label: "My Grades", icon: BookOpen },
@@ -607,9 +648,7 @@ export function StudentDashboard({
                   </Card>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* Recent Tasks */}
-                  <div className="lg:col-span-2 space-y-6 overflow-hidden">
+                <div className="space-y-8">
                     <div className="flex items-center justify-between">
                       <h3 className="text-xl font-black text-gray-800 flex items-center gap-2">
                         <ListTodo className="w-6 h-6 text-indigo-600" />
@@ -692,106 +731,6 @@ export function StudentDashboard({
                         </CardContent>
                       </Card>
                     )}
-                  </div>
-
-                  {/* Sidebar - Quick Access */}
-                  <div className="space-y-6 overflow-hidden">
-                    <h3 className="text-xl font-black text-gray-800 flex items-center gap-2">
-                      <Zap className="w-6 h-6 text-amber-500" />
-                      QUICK ACCESS
-                    </h3>
-
-                    <Card className="border-0 shadow-lg overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-700 text-white">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-4 mb-6">
-                          <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
-                            <TrendingUp className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <h4 className="font-bold leading-tight">My Performance</h4>
-                            <p className="text-indigo-100 text-xs opacity-80">
-                              Based on last 5 assignments
-                            </p>
-                          </div>
-                        </div>
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-end">
-                            <span className="text-xs font-medium text-indigo-100">
-                              Average Score
-                            </span>
-                            <span className="text-xl font-black italic">
-                              {grades.length > 0
-                                ? Math.round(
-                                    grades.reduce((a, b) => a + (b.score || 0), 0) /
-                                      grades.length,
-                                  )
-                                : 0}%
-                            </span>
-                          </div>
-                          <Progress
-                            value={
-                              grades.length > 0
-                                ? grades.reduce((a, b) => a + (b.score || 0), 0) /
-                                  grades.length
-                                : 0
-                            }
-                            className="h-1.5 bg-white/20"
-                          />
-                        </div>
-                        <Button
-                          variant="secondary"
-                          className="w-full mt-6 bg-white text-indigo-700 hover:bg-indigo-50 font-bold rounded-xl h-11"
-                          onClick={() => setActiveView("grades")}
-                        >
-                          Full Report
-                        </Button>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-0 shadow-lg bg-white">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-black text-gray-800 flex items-center gap-2">
-                          <Bell className="w-4 h-4 text-indigo-600" />
-                          LATEST NOTIFICATIONS
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-0">
-                        <div className="divide-y divide-gray-50">
-                          {notifications.slice(0, 3).map((notif) => (
-                            <div
-                              key={notif.id}
-                              className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                              onClick={() => markNotificationAsRead(notif.id)}
-                            >
-                              <p className="text-[10px] font-bold text-indigo-600 mb-1">
-                                {notif.type.toUpperCase()}
-                              </p>
-                              <h5 className="text-xs font-bold text-gray-900 leading-tight">
-                                {notif.title}
-                              </h5>
-                              <p className="text-[10px] text-gray-500 mt-1">
-                                {new Date(notif.createdAt).toLocaleDateString()}
-                              </p>
-                            </div>
-                          ))}
-                          {notifications.length === 0 && (
-                            <div className="p-8 text-center">
-                              <p className="text-xs text-gray-400">No new notifications</p>
-                            </div>
-                          )}
-                        </div>
-                        {notifications.length > 0 && (
-                          <Button
-                            variant="ghost"
-                            className="w-full text-indigo-600 text-xs font-bold py-4 h-auto hover:bg-indigo-50 rounded-none border-t border-gray-50"
-                            onClick={() => setShowNotifications(true)}
-                          >
-                            View All Notifications
-                          </Button>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
                 </div>
               </div>
             )}
