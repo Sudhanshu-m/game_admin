@@ -424,12 +424,12 @@ export function StudentDashboard({
         </div>
       </div>
 
-      <div className="flex flex-1 w-full overflow-hidden">
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar Component - Reusable for both Mobile and Desktop */}
         <div
           className={`${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } lg:translate-x-0 fixed lg:static lg:z-auto z-40 w-64 h-screen lg:h-auto lg:max-h-full bg-white shadow-xl lg:shadow-md transition-transform duration-300 ease-in-out border-r-2 border-indigo-100 flex flex-col flex-shrink-0`}
+          } lg:translate-x-0 fixed lg:static lg:z-auto z-40 w-64 h-screen lg:h-full bg-white shadow-xl lg:shadow-md transition-transform duration-300 ease-in-out border-r-2 border-indigo-100 flex flex-col flex-shrink-0`}
         >
           {/* Header Section */}
           <div className="p-6 lg:p-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white">
@@ -510,7 +510,7 @@ export function StudentDashboard({
         )}
 
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
           <div className="w-full max-w-full min-h-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             {/* Profile Content if active */}
             {activeView === 'profile' && (

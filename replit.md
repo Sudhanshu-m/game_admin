@@ -26,6 +26,11 @@ A comprehensive portal for dental colleges featuring distinct teacher (Admin) an
 
 ## Recent Changes
 
+- **Fixed Student Dashboard Layout**: Resolved issue where main content was hidden behind sidebar by:
+  - Removed `w-full` constraint from flex container to prevent width conflicts
+  - Updated sidebar height to use `lg:h-full` on desktop instead of `lg:h-auto`
+  - Changed main content area to use `min-w-0` for proper flex behavior and preventing content overlap
+  - Now both sidebar and main screen are properly visible side-by-side on desktop
 - Redesigned Student Profile to match Admin Settings aesthetic.
 - Fixed CORS issues in Edge Functions.
 - Implemented shared classes logic using Deno KV prefix scanning.
