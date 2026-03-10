@@ -383,20 +383,12 @@ export function StudentDashboard({
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* Mobile Sidebar Overlay */}
-        {isSidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
-        
-        {/* Sidebar - Mobile overlay, desktop static */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Mobile Sidebar - Fixed overlay, visible on mobile only */}
         <div
           className={`${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } lg:translate-x-0 fixed lg:static z-40 w-72 h-full bg-white shadow-2xl lg:shadow-none transition-transform duration-300 lg:transition-none ease-in-out border-r border-indigo-100 flex flex-col`}
+          } fixed lg:hidden z-40 w-72 h-full bg-white shadow-2xl transition-transform duration-300 ease-in-out border-r border-indigo-100 flex flex-col`}
         >
           <div className="p-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white">
             <div className="flex items-center gap-3 mb-6">
@@ -465,13 +457,79 @@ export function StudentDashboard({
           </div>
         </div>
 
-        {/* Overlay for mobile sidebar */}
+        {/* Mobile Overlay Backdrop */}
         {isSidebarOpen && (
           <div 
             className="fixed inset-0 bg-black/50 z-30 lg:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
+
+        {/* Desktop Sidebar - Static, visible on desktop only */}
+        <div className="hidden lg:flex lg:w-72 bg-white border-r border-indigo-100 flex-col flex-shrink-0">
+          <div className="p-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-white/20 rounded-lg backdrop-blur-md">
+                <GraduationCap className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight">Student Portal</h1>
+                <p className="text-indigo-100 text-xs opacity-80">
+                  Dental College Management
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 bg-white/10 p-4 rounded-xl backdrop-blur-md border border-white/10">
+              <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
+                <AvatarFallback className="bg-indigo-500 text-white font-bold">
+                  {profileData.name?.slice(0, 2).toUpperCase() || "ST"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm truncate">{profileData.name}</p>
+                <p className="text-xs text-indigo-100 opacity-80 truncate">
+                  Level {stats.level} Student
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 p-4 overflow-y-auto">
+            <nav className="space-y-2">
+              {sidebarItems.map((item) => (
+                <Button
+                  key={item.id}
+                  variant={activeView === item.id ? "secondary" : "ghost"}
+                  className={`w-full justify-start gap-3 h-12 rounded-xl text-sm font-medium transition-all ${
+                    activeView === item.id
+                      ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100"
+                      : "text-gray-600 hover:bg-indigo-50/50 hover:text-indigo-600"
+                  }`}
+                  onClick={() => setActiveView(item.id)}
+                >
+                  <item.icon
+                    className={`w-5 h-5 ${
+                      activeView === item.id ? "text-indigo-600" : "text-gray-400"
+                    }`}
+                  />
+                  {item.label}
+                </Button>
+              ))}
+            </nav>
+          </div>
+
+          <div className="p-4 border-t border-gray-100">
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 h-12 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl"
+              onClick={onLogout}
+            >
+              <LogOut className="w-5 h-5" />
+              Logout
+            </Button>
+          </div>
+        </div>
 
         {/* Main Content */}
         <div className="flex-1 overflow-auto w-full">
