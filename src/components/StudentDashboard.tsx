@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
@@ -193,8 +199,17 @@ export function StudentDashboard({
       }
       if (grade.grade) {
         const gradeMap = {
-          "A+": 100, A: 95, "A-": 90, "B+": 85, B: 80, "B-": 75,
-          "C+": 70, C: 65, "C-": 60, D: 50, F: 0,
+          "A+": 100,
+          A: 95,
+          "A-": 90,
+          "B+": 85,
+          B: 80,
+          "B-": 75,
+          "C+": 70,
+          C: 65,
+          "C-": 60,
+          D: 50,
+          F: 0,
         };
         return sum + (gradeMap[grade.grade] || 0);
       }
@@ -280,7 +295,10 @@ export function StudentDashboard({
       medium: "border-yellow-200 bg-yellow-50 text-yellow-700",
       low: "border-green-200 bg-green-50 text-green-700",
     };
-    return priorityColors[priority?.toLowerCase()] || "border-gray-200 bg-gray-50 text-gray-700";
+    return (
+      priorityColors[priority?.toLowerCase()] ||
+      "border-gray-200 bg-gray-50 text-gray-700"
+    );
   };
 
   const getGradeBadge = (score, maxScore, grade) => {
@@ -372,20 +390,22 @@ export function StudentDashboard({
 
   const ongoingTasks = sortedTasks.filter((t) => {
     const isGraded = grades.some(
-      (g) => g.taskId === t.id || g.task_id === t.id || g.assignment === t.title,
+      (g) =>
+        g.taskId === t.id || g.task_id === t.id || g.assignment === t.title,
     );
     return !t.completed && !isGraded;
   });
 
   const completedTasks = sortedTasks.filter((t) => {
     const isGraded = grades.some(
-      (g) => g.taskId === t.id || g.task_id === t.id || g.assignment === t.title,
+      (g) =>
+        g.taskId === t.id || g.task_id === t.id || g.assignment === t.title,
     );
     return t.completed || isGraded;
   });
 
   return (
-    <div className="min-h-screen w-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex flex-col">
+    <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex flex-col">
       {/* Mobile Header */}
       <div className="lg:hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-lg flex-shrink-0 z-50 border-b-4 border-indigo-700">
         <div className="flex items-center justify-between px-4 py-3">
@@ -424,12 +444,12 @@ export function StudentDashboard({
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 w-full overflow-hidden">
         {/* Sidebar Component - Reusable for both Mobile and Desktop */}
         <div
           className={`${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } lg:translate-x-0 fixed lg:static lg:z-auto z-40 w-64 h-screen lg:h-full bg-white shadow-xl lg:shadow-md transition-transform duration-300 ease-in-out border-r-2 border-indigo-100 flex flex-col flex-shrink-0`}
+          } lg:translate-x-0 fixed lg:static z-40 w-64 h-screen lg:h-full flex-shrink-0 bg-white border-r border-indigo-100 shadow-md flex flex-col transition-transform duration-300`}
         >
           {/* Header Section */}
           <div className="p-6 lg:p-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white">
@@ -438,8 +458,12 @@ export function StudentDashboard({
                 <GraduationCap className="w-7 h-7 text-white" />
               </div>
               <div className="flex-1">
-                <h1 className="text-lg lg:text-xl font-bold tracking-tight">Student Portal</h1>
-                <p className="text-indigo-100 text-xs opacity-80">Dental College</p>
+                <h1 className="text-lg lg:text-xl font-bold tracking-tight">
+                  Student Portal
+                </h1>
+                <p className="text-indigo-100 text-xs opacity-80">
+                  Dental College
+                </p>
               </div>
             </div>
 
@@ -451,8 +475,12 @@ export function StudentDashboard({
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-xs lg:text-sm truncate">{profileData.name}</p>
-                <p className="text-[10px] text-indigo-100 opacity-80 truncate">Level {stats.level}</p>
+                <p className="font-bold text-xs lg:text-sm truncate">
+                  {profileData.name}
+                </p>
+                <p className="text-[10px] text-indigo-100 opacity-80 truncate">
+                  Level {stats.level}
+                </p>
               </div>
             </div>
           </div>
@@ -476,7 +504,9 @@ export function StudentDashboard({
                 >
                   <item.icon
                     className={`w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0 ${
-                      activeView === item.id ? "text-indigo-600" : "text-gray-400"
+                      activeView === item.id
+                        ? "text-indigo-600"
+                        : "text-gray-400"
                     }`}
                   />
                   <span className="text-left">{item.label}</span>
@@ -503,19 +533,19 @@ export function StudentDashboard({
 
         {/* Mobile Overlay Backdrop */}
         {isSidebarOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 z-30 lg:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
 
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-          <div className="w-full max-w-full min-h-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <div className="flex-1 overflow-y-auto min-w-0 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+          <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
             {/* Profile Content if active */}
-            {activeView === 'profile' && (
-              <StudentProfile 
-                student={{...student, ...profileData}} 
+            {activeView === "profile" && (
+              <StudentProfile
+                student={{ ...student, ...profileData }}
                 onBack={() => setActiveView("dashboard")}
                 accessToken={accessToken}
                 projectId={projectId}
@@ -540,7 +570,7 @@ export function StudentDashboard({
             {activeView === "dashboard" && (
               <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
                   <Card className="border-0 shadow-lg bg-gradient-to-br from-indigo-500 to-indigo-700 text-white overflow-hidden group hover:shadow-xl hover:scale-105 transition-all duration-300">
                     <CardContent className="p-4 sm:p-6 relative">
                       <div className="flex justify-between items-start">
@@ -559,10 +589,18 @@ export function StudentDashboard({
                       <div className="mt-6">
                         <div className="flex justify-between text-xs mb-2">
                           <span>Progress to LVL {stats.level + 1}</span>
-                          <span>{Math.round((stats.currentLevelEXP / stats.nextLevelEXP) * 100)}%</span>
+                          <span>
+                            {Math.round(
+                              (stats.currentLevelEXP / stats.nextLevelEXP) *
+                                100,
+                            )}
+                            %
+                          </span>
                         </div>
                         <Progress
-                          value={(stats.currentLevelEXP / stats.nextLevelEXP) * 100}
+                          value={
+                            (stats.currentLevelEXP / stats.nextLevelEXP) * 100
+                          }
                           className="h-2 bg-white/20"
                         />
                       </div>
@@ -619,7 +657,8 @@ export function StudentDashboard({
                             Tasks Completed
                           </p>
                           <h3 className="text-3xl font-black italic">
-                            {stats.completedAssignments}/{stats.totalAssignments}
+                            {stats.completedAssignments}/
+                            {stats.totalAssignments}
                           </h3>
                         </div>
                         <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
@@ -631,14 +670,21 @@ export function StudentDashboard({
                           <span>Total Completion Rate</span>
                           <span>
                             {stats.totalAssignments > 0
-                              ? Math.round((stats.completedAssignments / stats.totalAssignments) * 100)
-                              : 0}%
+                              ? Math.round(
+                                  (stats.completedAssignments /
+                                    stats.totalAssignments) *
+                                    100,
+                                )
+                              : 0}
+                            %
                           </span>
                         </div>
                         <Progress
                           value={
                             stats.totalAssignments > 0
-                              ? (stats.completedAssignments / stats.totalAssignments) * 100
+                              ? (stats.completedAssignments /
+                                  stats.totalAssignments) *
+                                100
                               : 0
                           }
                           className="h-2 bg-white/20"
@@ -649,88 +695,91 @@ export function StudentDashboard({
                 </div>
 
                 <div className="space-y-8">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xl font-black text-gray-800 flex items-center gap-2">
-                        <ListTodo className="w-6 h-6 text-indigo-600" />
-                        ONGOING TASKS
-                      </h3>
-                      <Button
-                        variant="link"
-                        className="text-indigo-600 font-bold"
-                        onClick={() => setActiveView("tasks")}
-                      >
-                        View All Tasks →
-                      </Button>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-black text-gray-800 flex items-center gap-2">
+                      <ListTodo className="w-6 h-6 text-indigo-600" />
+                      ONGOING TASKS
+                    </h3>
+                    <Button
+                      variant="link"
+                      className="text-indigo-600 font-bold"
+                      onClick={() => setActiveView("tasks")}
+                    >
+                      View All Tasks →
+                    </Button>
+                  </div>
 
-                    {ongoingTasks.length > 0 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {ongoingTasks.slice(0, 4).map((task) => (
-                          <Card
-                            key={task.id}
-                            className="border-0 shadow-md hover:shadow-xl transition-shadow overflow-hidden group"
-                          >
-                            <div
-                              className={`h-1.5 w-full bg-gradient-to-r ${
-                                task.type === "quiz"
-                                  ? "from-purple-500 to-indigo-500"
-                                  : "from-blue-500 to-indigo-500"
-                              }`}
-                            />
-                            <CardContent className="p-5">
-                              <div className="flex justify-between items-start mb-3">
-                                <Badge className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-100 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-                                  {task.type === "quiz" ? "QUIZ" : "TASK"}
-                                </Badge>
-                                <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  DUE {new Date(task.dueDate).toLocaleDateString()}
+                  {ongoingTasks.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {ongoingTasks.slice(0, 4).map((task) => (
+                        <Card
+                          key={task.id}
+                          className="border-0 shadow-md hover:shadow-xl transition-shadow overflow-hidden group"
+                        >
+                          <div
+                            className={`h-1.5 w-full bg-gradient-to-r ${
+                              task.type === "quiz"
+                                ? "from-purple-500 to-indigo-500"
+                                : "from-blue-500 to-indigo-500"
+                            }`}
+                          />
+                          <CardContent className="p-5">
+                            <div className="flex justify-between items-start mb-3">
+                              <Badge className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-100 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                {task.type === "quiz" ? "QUIZ" : "TASK"}
+                              </Badge>
+                              <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                DUE{" "}
+                                {new Date(task.dueDate).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <h4 className="font-bold text-gray-900 line-clamp-1 mb-1 group-hover:text-indigo-600 transition-colors">
+                              {task.title}
+                            </h4>
+                            <p className="text-xs text-gray-500 line-clamp-2 mb-4 h-8">
+                              {task.description || "No description provided."}
+                            </p>
+                            <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
+                              <div className="flex items-center gap-1 text-amber-600">
+                                <Zap className="w-3 h-3 fill-current" />
+                                <span className="text-xs font-black">
+                                  {task.maxPoints || 100} XP
                                 </span>
                               </div>
-                              <h4 className="font-bold text-gray-900 line-clamp-1 mb-1 group-hover:text-indigo-600 transition-colors">
-                                {task.title}
-                              </h4>
-                              <p className="text-xs text-gray-500 line-clamp-2 mb-4 h-8">
-                                {task.description || "No description provided."}
-                              </p>
-                              <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
-                                <div className="flex items-center gap-1 text-amber-600">
-                                  <Zap className="w-3 h-3 fill-current" />
-                                  <span className="text-xs font-black">
-                                    {task.maxPoints || 100} XP
-                                  </span>
-                                </div>
-                                <Button
-                                  size="sm"
-                                  className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-4 text-xs font-bold shadow-md"
-                                  onClick={() => {
-                                    if (task.type === "quiz") startQuiz(task);
-                                    else setActiveView("tasks");
-                                  }}
-                                >
-                                  {task.type === "quiz" ? "Start Quiz" : "Details"}
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    ) : (
-                      <Card className="border-2 border-dashed border-gray-200 bg-gray-50/50">
-                        <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-                          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
-                            <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-                          </div>
-                          <h4 className="text-lg font-bold text-gray-900">
-                            All Caught Up!
-                          </h4>
-                          <p className="text-gray-500 max-w-xs mt-2 text-sm">
-                            You've completed all your ongoing tasks. Take a well-deserved
-                            break or review your grades!
-                          </p>
-                        </CardContent>
-                      </Card>
-                    )}
+                              <Button
+                                size="sm"
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-4 text-xs font-bold shadow-md"
+                                onClick={() => {
+                                  if (task.type === "quiz") startQuiz(task);
+                                  else setActiveView("tasks");
+                                }}
+                              >
+                                {task.type === "quiz"
+                                  ? "Start Quiz"
+                                  : "Details"}
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <Card className="border-2 border-dashed border-gray-200 bg-gray-50/50">
+                      <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                          <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                        </div>
+                        <h4 className="text-lg font-bold text-gray-900">
+                          All Caught Up!
+                        </h4>
+                        <p className="text-gray-500 max-w-xs mt-2 text-sm">
+                          You've completed all your ongoing tasks. Take a
+                          well-deserved break or review your grades!
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               </div>
             )}
@@ -750,7 +799,8 @@ export function StudentDashboard({
                             grades.reduce((a, b) => a + (b.score || 0), 0) /
                               grades.length,
                           )
-                        : 0}%
+                        : 0}
+                      %
                     </span>
                   </div>
                 </div>
@@ -818,7 +868,9 @@ export function StudentDashboard({
                                         : grade.grade}
                                     </span>
                                     <span className="text-[10px] font-bold text-gray-400">
-                                      LEVEL {Math.floor((grade.score || 0) / 10)} REWARD
+                                      LEVEL{" "}
+                                      {Math.floor((grade.score || 0) / 10)}{" "}
+                                      REWARD
                                     </span>
                                   </div>
                                 </td>
@@ -827,7 +879,10 @@ export function StudentDashboard({
                           })}
                           {grades.length === 0 && (
                             <tr>
-                              <td colSpan={4} className="px-6 py-20 text-center">
+                              <td
+                                colSpan={4}
+                                className="px-6 py-20 text-center"
+                              >
                                 <div className="max-w-xs mx-auto">
                                   <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <FileText className="w-8 h-8 text-gray-300" />
@@ -836,8 +891,8 @@ export function StudentDashboard({
                                     No grades found
                                   </h4>
                                   <p className="text-gray-500 text-xs mt-1">
-                                    You haven't received any grades yet. Complete your
-                                    tasks to see them here!
+                                    You haven't received any grades yet.
+                                    Complete your tasks to see them here!
                                   </p>
                                 </div>
                               </td>
@@ -910,7 +965,8 @@ export function StudentDashboard({
                               {task.title}
                             </h4>
                             <p className="text-xs text-gray-500 line-clamp-2 h-8 mb-6">
-                              {task.description || "No additional details provided."}
+                              {task.description ||
+                                "No additional details provided."}
                             </p>
 
                             <div className="grid grid-cols-2 gap-4 mb-6">
@@ -948,7 +1004,9 @@ export function StudentDashboard({
                                   else markTaskAttempted(task.id);
                                 }}
                               >
-                                {task.type === "quiz" ? "Take Quiz" : "Submit Work"}
+                                {task.type === "quiz"
+                                  ? "Take Quiz"
+                                  : "Submit Work"}
                               </Button>
                             </div>
                           </CardContent>
@@ -970,7 +1028,8 @@ export function StudentDashboard({
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {completedTasks.map((task) => {
                           const grade = grades.find(
-                            (g) => g.taskId === task.id || g.task_id === task.id,
+                            (g) =>
+                              g.taskId === task.id || g.task_id === task.id,
                           );
                           return (
                             <Card
@@ -1027,8 +1086,8 @@ export function StudentDashboard({
                     STUDENT LEADERBOARD
                   </h2>
                   <p className="text-gray-500 font-medium">
-                    Top performers across all dental departments. Rank is based on
-                    total EXP earned from assignments and quizzes.
+                    Top performers across all dental departments. Rank is based
+                    on total EXP earned from assignments and quizzes.
                   </p>
                 </div>
 
@@ -1036,7 +1095,12 @@ export function StudentDashboard({
                   {/* Mock Leaderboard display - in real app, fetch from backend */}
                   {[
                     { rank: 2, name: "Dr. Aryan Sharma", xp: 4850, level: 12 },
-                    { rank: 1, name: student?.name, xp: stats.totalEXP, level: stats.level },
+                    {
+                      rank: 1,
+                      name: student?.name,
+                      xp: stats.totalEXP,
+                      level: stats.level,
+                    },
                     { rank: 3, name: "Dr. Isha Patel", xp: 4200, level: 10 },
                   ]
                     .sort((a, b) => a.rank - b.rank)
@@ -1095,7 +1159,8 @@ export function StudentDashboard({
                               Current EXP
                             </p>
                             <p className="text-2xl font-black italic">
-                              {user.xp} <span className="text-xs not-italic">XP</span>
+                              {user.xp}{" "}
+                              <span className="text-xs not-italic">XP</span>
                             </p>
                           </div>
                         </CardContent>
@@ -1176,7 +1241,10 @@ export function StudentDashboard({
       </Dialog>
 
       {/* Daily Quest Dialog */}
-      <Dialog open={showDailyQuestDialog} onOpenChange={setShowDailyQuestDialog}>
+      <Dialog
+        open={showDailyQuestDialog}
+        onOpenChange={setShowDailyQuestDialog}
+      >
         <DialogContent className="max-w-md rounded-3xl border-0 shadow-2xl p-0 overflow-hidden">
           <div className="h-24 bg-gradient-to-r from-amber-400 to-orange-500 flex items-center justify-center">
             <Sparkles className="w-12 h-12 text-white" />
