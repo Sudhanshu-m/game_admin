@@ -346,26 +346,26 @@ export function StudentDashboard({
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex flex-col h-screen overflow-hidden">
       {/* Mobile Header */}
-      <div className="lg:hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-xl flex-shrink-0 z-50">
-        <div className="flex items-center justify-between p-4">
+      <div className="lg:hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-lg flex-shrink-0 z-50 border-b-4 border-indigo-700">
+        <div className="flex items-center justify-between px-4 py-3">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="text-white hover:bg-white/20"
+            className="text-white hover:bg-white/20 rounded-lg transition-all"
           >
             <Menu className="w-6 h-6" />
           </Button>
           <div className="flex items-center gap-2">
             <GraduationCap className="w-6 h-6" />
-            <span className="font-bold">Student Portal</span>
+            <span className="font-bold text-base">Student Portal</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowNotifications(true)}
-              className="text-white hover:bg-white/20 relative"
+              className="text-white hover:bg-white/20 relative rounded-lg transition-all"
             >
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
@@ -374,7 +374,7 @@ export function StudentDashboard({
                 </span>
               )}
             </Button>
-            <Avatar className="w-9 h-9 border-2 border-white shadow-lg">
+            <Avatar className="w-8 h-8 border-2 border-white shadow-lg">
               <AvatarFallback className="bg-indigo-500 text-white text-xs font-bold">
                 {profileData.name?.slice(0, 2).toUpperCase() || "ST"}
               </AvatarFallback>
@@ -384,50 +384,49 @@ export function StudentDashboard({
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Mobile Sidebar - Fixed overlay, visible on mobile only */}
+        {/* Sidebar Component - Reusable for both Mobile and Desktop */}
         <div
           className={`${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } fixed lg:hidden z-40 w-72 h-full bg-white shadow-2xl transition-transform duration-300 ease-in-out border-r border-indigo-100 flex flex-col`}
+          } lg:translate-x-0 fixed lg:static lg:z-auto z-40 w-64 h-full bg-white shadow-xl lg:shadow-md transition-transform duration-300 ease-in-out border-r-2 border-indigo-100 flex flex-col flex-shrink-0`}
         >
-          <div className="p-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white">
+          {/* Header Section */}
+          <div className="p-6 lg:p-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-white/20 rounded-lg backdrop-blur-md">
-                <GraduationCap className="w-8 h-8 text-white" />
+              <div className="p-2.5 bg-white/20 rounded-lg backdrop-blur-md hover:bg-white/30 transition-all">
+                <GraduationCap className="w-7 h-7 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold tracking-tight">Student Portal</h1>
-                <p className="text-indigo-100 text-xs opacity-80">
-                  Dental College Management
-                </p>
+              <div className="flex-1">
+                <h1 className="text-lg lg:text-xl font-bold tracking-tight">Student Portal</h1>
+                <p className="text-indigo-100 text-xs opacity-80">Dental College</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4 bg-white/10 p-4 rounded-xl backdrop-blur-md border border-white/10">
-              <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
-                <AvatarFallback className="bg-indigo-500 text-white font-bold">
+            {/* User Profile Card */}
+            <div className="flex items-center gap-3 bg-white/10 p-3 lg:p-4 rounded-xl backdrop-blur-md border border-white/10 hover:bg-white/15 transition-all">
+              <Avatar className="w-10 h-10 lg:w-12 lg:h-12 border-2 border-white shadow-lg flex-shrink-0">
+                <AvatarFallback className="bg-indigo-500 text-white font-bold text-sm">
                   {profileData.name?.slice(0, 2).toUpperCase() || "ST"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm truncate">{profileData.name}</p>
-                <p className="text-xs text-indigo-100 opacity-80 truncate">
-                  Level {stats.level} Student
-                </p>
+                <p className="font-bold text-xs lg:text-sm truncate">{profileData.name}</p>
+                <p className="text-[10px] text-indigo-100 opacity-80 truncate">Level {stats.level}</p>
               </div>
             </div>
           </div>
 
-          <div className="flex-1 p-4 overflow-y-auto">
-            <nav className="space-y-2">
+          {/* Navigation Menu */}
+          <div className="flex-1 p-3 lg:p-4 overflow-y-auto scrollbar-hide">
+            <nav className="space-y-1.5">
               {sidebarItems.map((item) => (
                 <Button
                   key={item.id}
                   variant={activeView === item.id ? "secondary" : "ghost"}
-                  className={`w-full justify-start gap-3 h-12 rounded-xl text-sm font-medium transition-all ${
+                  className={`w-full justify-start gap-3 h-11 lg:h-12 rounded-lg lg:rounded-xl text-xs lg:text-sm font-semibold transition-all duration-200 ${
                     activeView === item.id
-                      ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100"
-                      : "text-gray-600 hover:bg-indigo-50/50 hover:text-indigo-600"
+                      ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-200 hover:bg-indigo-100"
+                      : "text-gray-600 hover:bg-indigo-50/60 hover:text-indigo-700 hover:border hover:border-indigo-100"
                   }`}
                   onClick={() => {
                     setActiveView(item.id);
@@ -435,23 +434,27 @@ export function StudentDashboard({
                   }}
                 >
                   <item.icon
-                    className={`w-5 h-5 ${
+                    className={`w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0 ${
                       activeView === item.id ? "text-indigo-600" : "text-gray-400"
                     }`}
                   />
-                  {item.label}
+                  <span className="text-left">{item.label}</span>
+                  {activeView === item.id && (
+                    <div className="ml-auto w-2 h-2 bg-indigo-600 rounded-full" />
+                  )}
                 </Button>
               ))}
             </nav>
           </div>
 
-          <div className="p-4 border-t border-gray-100">
+          {/* Logout Section */}
+          <div className="p-3 lg:p-4 border-t border-gray-150 bg-gray-50/50">
             <Button
               variant="ghost"
-              className="w-full justify-start gap-3 h-12 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl"
+              className="w-full justify-start gap-3 h-11 lg:h-12 text-red-600 hover:bg-red-50/80 hover:text-red-700 rounded-lg lg:rounded-xl font-semibold transition-all text-xs lg:text-sm"
               onClick={onLogout}
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0" />
               Logout
             </Button>
           </div>
@@ -465,75 +468,9 @@ export function StudentDashboard({
           />
         )}
 
-        {/* Desktop Sidebar - Static, visible on desktop only */}
-        <div className="hidden lg:flex lg:w-72 bg-white border-r border-indigo-100 flex-col flex-shrink-0">
-          <div className="p-8 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-white/20 rounded-lg backdrop-blur-md">
-                <GraduationCap className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold tracking-tight">Student Portal</h1>
-                <p className="text-indigo-100 text-xs opacity-80">
-                  Dental College Management
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 bg-white/10 p-4 rounded-xl backdrop-blur-md border border-white/10">
-              <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
-                <AvatarFallback className="bg-indigo-500 text-white font-bold">
-                  {profileData.name?.slice(0, 2).toUpperCase() || "ST"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm truncate">{profileData.name}</p>
-                <p className="text-xs text-indigo-100 opacity-80 truncate">
-                  Level {stats.level} Student
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1 p-4 overflow-y-auto">
-            <nav className="space-y-2">
-              {sidebarItems.map((item) => (
-                <Button
-                  key={item.id}
-                  variant={activeView === item.id ? "secondary" : "ghost"}
-                  className={`w-full justify-start gap-3 h-12 rounded-xl text-sm font-medium transition-all ${
-                    activeView === item.id
-                      ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100"
-                      : "text-gray-600 hover:bg-indigo-50/50 hover:text-indigo-600"
-                  }`}
-                  onClick={() => setActiveView(item.id)}
-                >
-                  <item.icon
-                    className={`w-5 h-5 ${
-                      activeView === item.id ? "text-indigo-600" : "text-gray-400"
-                    }`}
-                  />
-                  {item.label}
-                </Button>
-              ))}
-            </nav>
-          </div>
-
-          <div className="p-4 border-t border-gray-100">
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-3 h-12 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl"
-              onClick={onLogout}
-            >
-              <LogOut className="w-5 h-5" />
-              Logout
-            </Button>
-          </div>
-        </div>
-
         {/* Main Content */}
-        <div className="flex-1 overflow-auto w-full">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="flex-1 overflow-auto w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+          <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             {/* Profile Content if active */}
             {activeView === 'profile' && (
               <StudentProfile 
@@ -560,22 +497,22 @@ export function StudentDashboard({
 
             {/* View Content based on activeView */}
             {activeView === "dashboard" && (
-              <div className="space-y-8 animate-in fade-in duration-500">
+              <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                  <Card className="border-0 shadow-lg bg-gradient-to-br from-indigo-500 to-indigo-700 text-white overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-                    <CardContent className="p-6 relative">
+                <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+                  <Card className="border-0 shadow-lg bg-gradient-to-br from-indigo-500 to-indigo-700 text-white overflow-hidden group hover:shadow-xl hover:scale-105 transition-all duration-300">
+                    <CardContent className="p-4 sm:p-6 relative">
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="text-indigo-100 text-xs font-bold uppercase tracking-widest mb-1">
+                          <p className="text-indigo-100 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1">
                             Current Level
                           </p>
-                          <h3 className="text-3xl font-black italic">
+                          <h3 className="text-2xl sm:text-3xl font-black italic">
                             LVL {stats.level}
                           </h3>
                         </div>
-                        <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
-                          <Trophy className="w-6 h-6" />
+                        <div className="p-2 sm:p-3 bg-white/20 rounded-lg sm:rounded-2xl backdrop-blur-md">
+                          <Trophy className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                       </div>
                       <div className="mt-6">
@@ -591,19 +528,19 @@ export function StudentDashboard({
                     </CardContent>
                   </Card>
 
-                  <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-500 to-purple-700 text-white overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-                    <CardContent className="p-6">
+                  <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-500 to-purple-700 text-white overflow-hidden group hover:shadow-xl hover:scale-105 transition-all duration-300">
+                    <CardContent className="p-4 sm:p-6">
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="text-purple-100 text-xs font-bold uppercase tracking-widest mb-1">
+                          <p className="text-purple-100 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1">
                             Total Experience
                           </p>
-                          <h3 className="text-3xl font-black italic">
+                          <h3 className="text-2xl sm:text-3xl font-black italic">
                             {stats.totalEXP} XP
                           </h3>
                         </div>
-                        <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
-                          <Star className="w-6 h-6" />
+                        <div className="p-2 sm:p-3 bg-white/20 rounded-lg sm:rounded-2xl backdrop-blur-md">
+                          <Star className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                       </div>
                       <p className="text-xs text-purple-100 mt-6 font-medium">
