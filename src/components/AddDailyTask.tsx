@@ -38,21 +38,27 @@ export function AddDailyTask({ selectedClass, classes = [], onBack, accessToken,
     setLoading(true);
 
     try {
+      const pts = parseInt(rewardPoints) || 100;
       const payload = {
+        id: `task-${Date.now()}`,
         title: taskTitle,
         description: taskDescription,
-        points: parseInt(rewardPoints) || 100,
+        maxPoints: pts,
+        points: pts,
+        dueDate: dueDate,
         date: dueDate,
-        class_id: activeClass?.id || null,
-        type: 'task',
+        classId: activeClass?.id || null,
+        className: activeClass?.name || null,
         subject: activeClass?.name || 'General',
         priority: priority,
+        type: 'task',
+        status: 'active',
       };
 
       console.log('Creating task with:', payload);
 
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/add-task`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/tasks`,
         {
           method: 'POST',
           headers: {
@@ -76,8 +82,8 @@ export function AddDailyTask({ selectedClass, classes = [], onBack, accessToken,
 
       if (response.ok) {
         const assignMsg = activeClass
-          ? `Task assigned to all students in ${activeClass.name}!`
-          : 'Task assigned to all students!';
+          ? `Task created and assigned to all students in ${activeClass.name}!`
+          : 'Task created and assigned to all students!';
         toast.success(assignMsg);
         setTaskTitle('');
         setTaskDescription('');
@@ -85,8 +91,8 @@ export function AddDailyTask({ selectedClass, classes = [], onBack, accessToken,
         setPriority('Medium');
         setRewardPoints('100');
         setSelectedClassId(selectedClass?.id || '');
-        if (onTaskCreated && data.task) {
-          onTaskCreated(data.task);
+        if (onTaskCreated) {
+          onTaskCreated(data);
         }
         onBack();
       } else {
