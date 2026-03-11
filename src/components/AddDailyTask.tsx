@@ -16,14 +16,16 @@ import { ArrowLeft, Sparkles, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { projectId } from '../utils/supabase/info';
 
-export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated }) {
+export function AddDailyTask({ selectedClass, classes = [], onBack, accessToken, onTaskCreated }) {
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
-  const [subject, setSubject] = useState(selectedClass?.name || '');
+  const [selectedClassId, setSelectedClassId] = useState(selectedClass?.id || '');
   const [dueDate, setDueDate] = useState('');
   const [priority, setPriority] = useState('Medium');
   const [rewardPoints, setRewardPoints] = useState('100');
   const [loading, setLoading] = useState(false);
+
+  const activeClass = selectedClass || classes.find(c => c.id === selectedClassId) || null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,16 +38,18 @@ export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated
     setLoading(true);
 
     try {
-      console.log('Creating task with:', {
+      const payload = {
         title: taskTitle,
         description: taskDescription,
         points: parseInt(rewardPoints) || 100,
         date: dueDate,
-        class_id: selectedClass?.id || null,
+        class_id: activeClass?.id || null,
         type: 'task',
-        subject: subject,
+        subject: activeClass?.name || 'General',
         priority: priority,
-      });
+      };
+
+      console.log('Creating task with:', payload);
 
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/add-task`,
@@ -53,44 +57,45 @@ export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            title: taskTitle,
-            description: taskDescription,
-            points: parseInt(rewardPoints) || 100,
-            date: dueDate,
-            class_id: selectedClass?.id || null,
-            type: 'task',
-            subject: subject || 'General',
-            priority: priority,
-          })
+          body: JSON.stringify(payload),
         }
       );
 
+      const rawText = await response.text();
+      let data: any = null;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        console.error('Non-JSON response from server:', rawText.substring(0, 200));
+        toast.error('Server returned an unexpected response. Please try again.');
+        setLoading(false);
+        return;
+      }
+
       if (response.ok) {
-        const data = await response.json();
-        const assignMsg = selectedClass 
-          ? `Task assigned to all students in ${selectedClass.name}!`
-          : 'Task created successfully!';
+        const assignMsg = activeClass
+          ? `Task assigned to all students in ${activeClass.name}!`
+          : 'Task assigned to all students!';
         toast.success(assignMsg);
         setTaskTitle('');
         setTaskDescription('');
         setDueDate('');
         setPriority('Medium');
         setRewardPoints('100');
+        setSelectedClassId(selectedClass?.id || '');
         if (onTaskCreated && data.task) {
           onTaskCreated(data.task);
         }
         onBack();
       } else {
-        const errorData = await response.json();
-        console.error('Task creation error response:', errorData);
-        toast.error('Failed to create task: ' + (errorData.error || 'Unknown error'));
+        console.error('Task creation error response:', data);
+        toast.error('Failed to create task: ' + (data?.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error creating task:', error);
-      toast.error('Failed to create task');
+      toast.error('Failed to create task. Please check your connection and try again.');
     }
 
     setLoading(false);
@@ -99,7 +104,6 @@ export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
       <div className="max-w-3xl mx-auto">
-        {/* Header with Back Button */}
         <div className="mb-6 flex items-center gap-3">
           <Button
             onClick={onBack}
@@ -107,32 +111,28 @@ export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated
             className="gap-2 text-slate-600 hover:text-slate-900"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Class
+            Back
           </Button>
         </div>
 
-        {/* Page Title */}
         <h1 className="text-3xl font-bold text-slate-900 mb-6 flex items-center gap-2">
           <Sparkles className="w-8 h-8 text-amber-500" />
-          Add Daily Task {selectedClass && `- ${selectedClass.name}`}
+          Add Task {activeClass && `- ${activeClass.name}`}
         </h1>
 
-        {/* Info Banner */}
         <Alert className="mb-6 border-0 bg-gradient-to-r from-amber-50 to-pink-50 shadow-sm">
           <AlertCircle className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-amber-900 ml-2">
-            {selectedClass 
-              ? `This task will be automatically assigned to all students currently enrolled in ${selectedClass.name}.`
+            {activeClass
+              ? `This task will be automatically assigned to all students currently enrolled in ${activeClass.name}.`
               : 'This task will be assigned to all registered students.'}
             {' '}It will appear as a highlighted task card on their dashboard.
           </AlertDescription>
         </Alert>
 
-        {/* Form Card */}
         <Card className="border-0 shadow-lg">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="p-6 space-y-6">
-              {/* Task Title */}
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-base font-semibold">
                   Task Title <span className="text-red-500">*</span>
@@ -146,7 +146,6 @@ export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated
                 />
               </div>
 
-              {/* Task Description */}
               <div className="space-y-2">
                 <Label htmlFor="description" className="text-base font-semibold">
                   Task Description <span className="text-red-500">*</span>
@@ -162,20 +161,34 @@ export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Subject */}
+                {/* Class / Subject dropdown */}
                 <div className="space-y-2">
-                  <Label htmlFor="subject" className="text-base font-semibold">
-                    Subject
+                  <Label className="text-base font-semibold">
+                    Class / Subject <span className="text-red-500">*</span>
                   </Label>
-                  <Input
-                    id="subject"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    className="text-base"
-                  />
+                  {selectedClass ? (
+                    <Input
+                      value={selectedClass.name}
+                      disabled
+                      className="text-base bg-slate-50"
+                    />
+                  ) : (
+                    <Select value={selectedClassId} onValueChange={setSelectedClassId}>
+                      <SelectTrigger className="text-base">
+                        <SelectValue placeholder="Select a class (or leave for all students)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Students (No specific class)</SelectItem>
+                        {classes.map((cls) => (
+                          <SelectItem key={cls.id} value={cls.id}>
+                            {cls.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
 
-                {/* Due Date */}
                 <div className="space-y-2">
                   <Label htmlFor="dueDate" className="text-base font-semibold">
                     Due Date <span className="text-red-500">*</span>
@@ -189,7 +202,6 @@ export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated
                   />
                 </div>
 
-                {/* Priority */}
                 <div className="space-y-2">
                   <Label htmlFor="priority" className="text-base font-semibold">
                     Priority
@@ -206,7 +218,6 @@ export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated
                   </Select>
                 </div>
 
-                {/* Reward Points */}
                 <div className="space-y-2">
                   <Label htmlFor="points" className="text-base font-semibold">
                     Reward Points <span className="text-red-500">*</span>
@@ -223,18 +234,18 @@ export function AddDailyTask({ selectedClass, onBack, accessToken, onTaskCreated
                 </div>
               </div>
 
-              {/* Task Assignment Info */}
               <Alert className="border-l-4 border-l-amber-500 bg-amber-50">
                 <Sparkles className="h-4 w-4 text-amber-600" />
                 <AlertDescription className="text-amber-900 ml-2">
-                  <strong>Task Assignment:</strong> {selectedClass 
-                    ? `This task will be automatically assigned to all students currently enrolled in ${selectedClass.name}.`
-                    : 'This task will be assigned to all registered students.'} It will appear as a highlighted task card on their dashboard!
+                  <strong>Task Assignment:</strong>{' '}
+                  {activeClass
+                    ? `This task will be automatically assigned to all students currently enrolled in ${activeClass.name}.`
+                    : 'This task will be assigned to all registered students.'}{' '}
+                  It will appear as a highlighted task card on their dashboard!
                 </AlertDescription>
               </Alert>
             </div>
 
-            {/* Action Buttons */}
             <div className="border-t p-6 flex gap-3 justify-end">
               <Button
                 type="button"
