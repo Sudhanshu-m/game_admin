@@ -345,6 +345,7 @@ export function StudentDashboard({
     { id: "leaderboard", label: "Leaderboard", icon: Trophy },
     { id: "profile", label: "My Profile", icon: User },
   ];
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   if (selectedQuiz) {
     return (
@@ -355,8 +356,6 @@ export function StudentDashboard({
       />
     );
   }
-
-  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   const handleUpdateProfile = async (e) => {
     if (e) e.preventDefault();
@@ -411,18 +410,17 @@ export function StudentDashboard({
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen">
+      <div className="flex flex-col h-screen">
         {/* Mobile Header */}
         <div className="lg:hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-lg flex-shrink-0 z-50 border-b-4 border-indigo-700">
           <div className="flex items-center justify-between px-4 py-3">
-            <Button
+            <SidebarTrigger
               variant="ghost"
               size="icon"
-              onClick={() => setShowNotifications(true)}
               className="text-white hover:bg-white/20 rounded-lg transition-all"
             >
               <Menu className="w-6 h-6" />
-            </Button>
+            </SidebarTrigger>
             <div className="flex items-center gap-2">
               <GraduationCap className="w-6 h-6" />
               <span className="font-bold text-base">Student Portal</span>
