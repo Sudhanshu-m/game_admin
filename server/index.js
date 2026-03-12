@@ -171,19 +171,35 @@ app.post('/make-server-2fad19e1/teacher/tasks', async (req, res) => {
     const tasksList = Array.isArray(existingTasks) ? existingTasks : [];
     tasksList.push(newTask);
     await kvSet(tasksKey, tasksList);
-    if (newTask.classId) {
-      try {
-        const allStudentsRaw = (await kvGet(`students:${user.id}`)) || [];
-        const classStudents = Array.isArray(allStudentsRaw) ? allStudentsRaw.filter(s => s?.classId === newTask.classId && s.email) : [];
-        for (const student of classStudents) {
-          const key = `student_tasks:${student.email}`;
-          const existing = (await kvGet(key)) || [];
-          const list = Array.isArray(existing) ? existing : [];
+    try {
+      const emailsToAssign = new Set();
+      const allStudentsRaw = (await kvGet(`students:${user.id}`)) || [];
+      const allStudents = Array.isArray(allStudentsRaw) ? allStudentsRaw : [];
+      console.log(`[teacher/tasks] teacher=${user.id}, classId=${newTask.classId}, total students=${allStudents.length}`);
+      const classStudents = newTask.classId ? allStudents.filter(s => s?.classId === newTask.classId && s.email) : allStudents.filter(s => s?.email);
+      classStudents.forEach(s => emailsToAssign.add(s.email));
+      const profileEntries = await kvGetByPrefix('student_profile:');
+      const fromProfiles = newTask.classId
+        ? profileEntries.filter(e => e.value?.classId === newTask.classId && e.value?.email)
+        : profileEntries.filter(e => e.value?.email);
+      fromProfiles.forEach(e => emailsToAssign.add(e.value.email));
+      console.log(`[teacher/tasks] eligible students: ${emailsToAssign.size}`);
+      for (const email of emailsToAssign) {
+        const key = `student_tasks:${email}`;
+        const existing = (await kvGet(key)) || [];
+        const list = Array.isArray(existing) ? existing : [];
+        if (!list.some(t => t.id === newTask.id)) {
           list.push({ ...newTask, completed: false });
           await kvSet(key, list);
+          const notifKey = `notifications:${email}`;
+          const notifs = (await kvGet(notifKey)) || [];
+          const notifsList = Array.isArray(notifs) ? notifs : [];
+          notifsList.push({ id: `notif-${Date.now()}-${Math.random()}`, type: 'task', title: `New Assignment`, message: `You have been assigned: ${newTask.title}`, createdAt: new Date().toISOString(), read: false, taskId: newTask.id });
+          await kvSet(notifKey, notifsList);
+          console.log(`[teacher/tasks] assigned to ${email}`);
         }
-      } catch (e) { console.log('Student assignment error (non-fatal):', e); }
-    }
+      }
+    } catch (e) { console.log('Student assignment error (non-fatal):', e); }
     return res.json(newTask);
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -220,21 +236,42 @@ app.post('/make-server-2fad19e1/teacher/add-task', async (req, res) => {
     await kvSet(tasksKey, tasksList);
     let assignmentCount = 0;
     try {
+      // Build eligible student emails from multiple sources
+      const emailsToAssign = new Set();
+
+      // Source 1: Teacher's manually managed student list
       const allStudentsRaw = (await kvGet(`students:${user.id}`)) || [];
       const allStudents = Array.isArray(allStudentsRaw) ? allStudentsRaw : [];
-      const eligibleStudents = class_id ? allStudents.filter(s => s?.classId === class_id && s.email) : allStudents.filter(s => s?.email);
-      for (const student of eligibleStudents) {
-        const key = `student_tasks:${student.email}`;
+      console.log(`[add-task] teacher=${user.id}, class_id=${class_id}, total students in teacher KV=${allStudents.length}`);
+      console.log(`[add-task] student classIds:`, allStudents.map(s => ({ email: s?.email, classId: s?.classId })));
+      const fromTeacherList = class_id ? allStudents.filter(s => s?.classId === class_id && s.email) : allStudents.filter(s => s?.email);
+      fromTeacherList.forEach(s => emailsToAssign.add(s.email));
+      console.log(`[add-task] from teacher list: ${fromTeacherList.length}`);
+
+      // Source 2: Student profiles (registered portal students)
+      const profileEntries = await kvGetByPrefix('student_profile:');
+      const fromProfiles = class_id
+        ? profileEntries.filter(e => e.value?.classId === class_id && e.value?.email)
+        : profileEntries.filter(e => e.value?.email);
+      fromProfiles.forEach(e => emailsToAssign.add(e.value.email));
+      console.log(`[add-task] from student profiles: ${fromProfiles.length}, total unique emails: ${emailsToAssign.size}`);
+
+      for (const email of emailsToAssign) {
+        const key = `student_tasks:${email}`;
         const existing = (await kvGet(key)) || [];
         const list = Array.isArray(existing) ? existing : [];
-        list.push({ ...task, completed: false, grade: null });
-        await kvSet(key, list);
-        const notifKey = `notifications:${student.email}`;
-        const notifs = (await kvGet(notifKey)) || [];
-        const notifsList = Array.isArray(notifs) ? notifs : [];
-        notifsList.push({ id: `notif-${Date.now()}-${student.email}`, type: 'task', title: `New Task: ${title}`, message: description || '', createdAt: new Date().toISOString(), read: false, taskId: task.id });
-        await kvSet(notifKey, notifsList);
-        assignmentCount++;
+        // Avoid adding duplicate tasks
+        if (!list.some(t => t.id === task.id)) {
+          list.push({ ...task, completed: false, grade: null });
+          await kvSet(key, list);
+          const notifKey = `notifications:${email}`;
+          const notifs = (await kvGet(notifKey)) || [];
+          const notifsList = Array.isArray(notifs) ? notifs : [];
+          notifsList.push({ id: `notif-${Date.now()}-${Math.random()}`, type: 'task', title: `New Assignment`, message: `You have been assigned: ${title}`, createdAt: new Date().toISOString(), read: false, taskId: task.id });
+          await kvSet(notifKey, notifsList);
+          assignmentCount++;
+          console.log(`[add-task] assigned to ${email}`);
+        }
       }
     } catch (e) { console.log('Error during student assignment:', e); }
     return res.json({ success: true, task, assignedCount: assignmentCount });
