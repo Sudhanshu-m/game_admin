@@ -47,22 +47,18 @@ export function AddDailyTask({ selectedClass, classes = [], students = [], onBac
     try {
       const pts = parseInt(rewardPoints) || 100;
       const taskPayload = {
-        id: `task-${Date.now()}`,
         title: taskTitle.trim(),
         description: taskDescription.trim(),
-        maxPoints: pts,
         points: pts,
-        dueDate: dueDate,
         date: dueDate,
-        classId: activeClass?.id || null,
-        className: activeClass?.name || null,
+        class_id: activeClass?.id || null,
         subject: activeClass?.name || 'General',
         priority: priority,
         type: 'task',
-        status: 'active',
       };
 
-      const response = await fetch(`${EDGE_URL}/teacher/tasks`, {
+      // Try the newer /teacher/add-task endpoint first, fall back to /teacher/tasks
+      let response = await fetch(`${EDGE_URL}/teacher/add-task`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,12 +67,39 @@ export function AddDailyTask({ selectedClass, classes = [], students = [], onBac
         body: JSON.stringify(taskPayload),
       });
 
+      // If add-task doesn't exist on deployed version, fall back to /teacher/tasks
+      if (response.status === 404) {
+        response = await fetch(`${EDGE_URL}/teacher/tasks`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            id: `task-${Date.now()}`,
+            title: taskPayload.title,
+            description: taskPayload.description,
+            maxPoints: pts,
+            points: pts,
+            dueDate: dueDate,
+            date: dueDate,
+            classId: activeClass?.id || null,
+            className: activeClass?.name || null,
+            subject: taskPayload.subject,
+            priority: priority,
+            type: 'task',
+            status: 'active',
+          }),
+        });
+      }
+
       if (!response.ok) {
         const errBody = await response.json().catch(() => ({}));
         throw new Error(errBody.error || `Server error ${response.status}`);
       }
 
-      const createdTask = await response.json();
+      const result = await response.json();
+      const createdTask = result.task || result;
 
       const assignedCount = activeClass
         ? students.filter(s => s.classId === activeClass.id).length
