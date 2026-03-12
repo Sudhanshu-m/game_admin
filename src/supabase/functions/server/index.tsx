@@ -331,6 +331,71 @@ app.post("/make-server-2fad19e1/teacher/add-task", async (c) => {
   }
 });
 
+// Get students assigned to a specific task with their grades
+app.post("/make-server-2fad19e1/teacher/task-students", async (c) => {
+  try {
+    const accessToken = c.req.header("Authorization")?.split(" ")[1];
+    if (!accessToken) return c.json({ error: "Unauthorized" }, 401);
+    const supabase = getSupabaseClient(true);
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+    if (error || !user) return c.json({ error: "Unauthorized" }, 401);
+
+    const body = await c.req.json();
+    const { taskId } = body;
+
+    // Get all teacher's students
+    const allStudentsRaw = (await kvGet(`students:${user.id}`)) || [];
+    const allStudents: any[] = Array.isArray(allStudentsRaw) ? allStudentsRaw : [];
+
+    // Get tasks to find classId for this task
+    const tasks = (await kvGet(`tasks:${user.id}`)) || [];
+    const tasksList: any[] = Array.isArray(tasks) ? tasks : [];
+    const task = tasksList.find((t: any) => t.id === taskId);
+
+    // Filter students: if task has a classId, only that class; otherwise all
+    const relevantStudents = task?.classId
+      ? allStudents.filter((s: any) => s.classId === task.classId)
+      : allStudents;
+
+    // Get grades for this task
+    const taskGrades = (await kvGet(`task_grades:${taskId}`)) || {};
+
+    // Build student list with grade info
+    const studentsWithGrades = relevantStudents.map((s: any) => ({
+      id: s.id,
+      name: s.name,
+      email: s.email,
+      avatar: s.avatar,
+      classId: s.classId,
+      className: s.className,
+      grade: taskGrades[s.email] || null,
+    }));
+
+    return c.json({ students: studentsWithGrades });
+  } catch (error) {
+    console.log("Task students error:", error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Get grades for a specific task
+app.get("/make-server-2fad19e1/teacher/task-grades/:taskId", async (c) => {
+  try {
+    const accessToken = c.req.header("Authorization")?.split(" ")[1];
+    if (!accessToken) return c.json({ error: "Unauthorized" }, 401);
+    const supabase = getSupabaseClient(true);
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+    if (error || !user) return c.json({ error: "Unauthorized" }, 401);
+
+    const taskId = c.req.param("taskId");
+    const grades = (await kvGet(`task_grades:${taskId}`)) || {};
+    return c.json({ grades });
+  } catch (error) {
+    console.log("Task grades error:", error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
 // Quest backward compat
 app.post("/make-server-2fad19e1/teacher/quest", async (c) => {
   return c.redirect(307, "/make-server-2fad19e1/teacher/add-task");
