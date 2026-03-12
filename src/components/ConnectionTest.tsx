@@ -22,7 +22,7 @@ export function ConnectionTest() {
       // Test 1: Health check endpoint
       console.log('Testing health endpoint...');
       const healthResponse = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/health`,
+        `/make-server-2fad19e1/health`,
         {
           method: 'GET',
           headers: {
@@ -49,7 +49,7 @@ export function ConnectionTest() {
     try {
       console.log('Testing CORS...');
       const corsResponse = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/health`,
+        `/make-server-2fad19e1/health`,
         {
           method: 'OPTIONS',
         }

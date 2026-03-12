@@ -16,7 +16,7 @@ import { ArrowLeft, Sparkles, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { projectId } from '../utils/supabase/info';
 
-const EDGE_URL = `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1`;
+const EDGE_URL = `/make-server-2fad19e1`;
 
 export function AddDailyTask({ selectedClass, classes = [], students = [], onBack, onTaskCreated, accessToken }) {
   const [taskTitle, setTaskTitle] = useState('');

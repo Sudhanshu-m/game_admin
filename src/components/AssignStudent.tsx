@@ -22,7 +22,7 @@ export function AssignStudent({ student, classes, onBack, onAssignSuccess, acces
       try {
         // Fetch streak data
         const streakResponse = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/student-streak/${student.email}`,
+          `/make-server-2fad19e1/teacher/student-streak/${student.email}`,
           {
             headers: {
               'Authorization': `Bearer ${accessToken}`
@@ -37,7 +37,7 @@ export function AssignStudent({ student, classes, onBack, onAssignSuccess, acces
 
         // Fetch task data
         const tasksResponse = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/student-tasks/${student.email}`,
+          `/make-server-2fad19e1/teacher/student-tasks/${student.email}`,
           {
             headers: {
               'Authorization': `Bearer ${accessToken}`
@@ -75,7 +75,7 @@ export function AssignStudent({ student, classes, onBack, onAssignSuccess, acces
     try {
       const selectedClass = classes.find(c => c.id === selectedClassId);
       
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/assign-student`, {
+      const response = await fetch(`/make-server-2fad19e1/teacher/assign-student`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -110,7 +110,7 @@ export function AssignStudent({ student, classes, onBack, onAssignSuccess, acces
   const handleUnassign = async () => {
     setIsAssigning(true);
     try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/unassign-student`, {
+      const response = await fetch(`/make-server-2fad19e1/teacher/unassign-student`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

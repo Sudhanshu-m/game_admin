@@ -17,7 +17,7 @@ export function DebugPanel({ accessToken }) {
       
       // Get all students from debug endpoint
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/debug/students`,
+        `/make-server-2fad19e1/debug/students`,
         {
           headers: {
             'Authorization': `Bearer ${publicAnonKey}`
@@ -38,7 +38,7 @@ export function DebugPanel({ accessToken }) {
 
       // Also try to get students via the normal endpoint
       const studentsResponse = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/all-students`,
+        `/make-server-2fad19e1/teacher/all-students`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`

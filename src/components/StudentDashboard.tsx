@@ -121,7 +121,7 @@ export function StudentDashboard({
   const loadStudentData = async () => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/data`,
+        `/make-server-2fad19e1/student/data`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -151,7 +151,7 @@ export function StudentDashboard({
   const loadNotifications = async () => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/notifications`,
+        `/make-server-2fad19e1/student/notifications`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -174,7 +174,7 @@ export function StudentDashboard({
   const checkDailyQuest = async () => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/quest`,
+        `/make-server-2fad19e1/quest`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -251,7 +251,7 @@ export function StudentDashboard({
   const handleQuizSubmission = async (submission) => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/quiz/submit`,
+        `/make-server-2fad19e1/student/quiz/submit`,
         {
           method: "POST",
           headers: {
@@ -278,7 +278,7 @@ export function StudentDashboard({
   const markNotificationAsRead = async (notificationId) => {
     try {
       await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/notifications/read`,
+        `/make-server-2fad19e1/student/notifications/read`,
         {
           method: "POST",
           headers: {
@@ -362,7 +362,7 @@ export function StudentDashboard({
     setIsUpdatingProfile(true);
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/profile/update`,
+        `/make-server-2fad19e1/student/profile/update`,
         {
           method: "POST",
           headers: {

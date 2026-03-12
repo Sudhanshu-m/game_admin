@@ -42,7 +42,7 @@ export default function App() {
         }
 
         // Try to fetch teacher data
-        const teacherResponse = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/profile`, {
+        const teacherResponse = await fetch(`/make-server-2fad19e1/teacher/profile`, {
           headers: {
             'Authorization': `Bearer ${session.access_token}`
           }
@@ -105,7 +105,7 @@ export default function App() {
 
         // Fetch user data from backend
         try {
-          const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/profile`, {
+          const response = await fetch(`/make-server-2fad19e1/teacher/profile`, {
             headers: {
               'Authorization': `Bearer ${data.session.access_token}`
             }
@@ -118,21 +118,31 @@ export default function App() {
             setIsAuthenticated(true);
             toast.success(`Welcome back, ${userData.teacher.name}!`);
           } else {
-            const errorData = await response.json();
-            console.log('Backend response error:', errorData);
-            
+            let errorMessage = 'Failed to fetch user data';
+            try {
+              const errorData = await response.json();
+              console.log('Backend response error:', errorData);
+              errorMessage = errorData.error || errorMessage;
+            } catch {
+              const text = await response.text().catch(() => '');
+              console.log('Backend non-JSON error response:', response.status, text.slice(0, 200));
+            }
+
             if (response.status === 403) {
               toast.error('Access denied. This account is not registered as a teacher. Please use the Student Portal.');
               await supabase.auth.signOut();
             } else {
-              toast.error(errorData.error || 'Failed to fetch user data');
+              toast.error(errorMessage);
             }
-            throw new Error(errorData.error);
+            await supabase.auth.signOut();
+            throw new Error(errorMessage);
           }
         } catch (fetchError) {
           console.error('Fetch error:', fetchError);
-          if (!fetchError.message.includes('Access denied')) {
-            toast.error('Unable to connect to the server. Please try again later.');
+          if (!fetchError.message.includes('Access denied') && !fetchError.message.includes('Failed to fetch')) {
+            // already shown above
+          } else if (fetchError.message.includes('Failed to fetch')) {
+            toast.error('Unable to connect to the server. Please check your internet connection.');
           }
           await supabase.auth.signOut();
           throw fetchError;
@@ -146,7 +156,7 @@ export default function App() {
 
   const handleSignup = async (formData) => {
     try {
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/signup`, {
+      const response = await fetch(`/make-server-2fad19e1/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

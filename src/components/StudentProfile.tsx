@@ -47,7 +47,7 @@ export function StudentProfile({ student, onBack, accessToken, projectId, onUpda
     setIsUpdating(true);
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/student/profile/update`,
+        `/make-server-2fad19e1/student/profile/update`,
         {
           method: "POST",
           headers: {

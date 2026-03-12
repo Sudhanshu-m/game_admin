@@ -91,7 +91,7 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
         }
       }
 
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/data`, {
+      const response = await fetch(`/make-server-2fad19e1/teacher/data`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }
@@ -124,7 +124,7 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
   const loadRegisteredStudents = async () => {
     try {
       console.log('Loading registered students with token:', accessToken ? 'Token present' : 'NO TOKEN');
-      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/all-students`, {
+      const response = await fetch(`/make-server-2fad19e1/teacher/all-students`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }
@@ -153,7 +153,7 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
 
   const saveStudents = async () => {
     try {
-      await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/students`, {
+      await fetch(`/make-server-2fad19e1/teacher/students`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -168,7 +168,7 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
 
   const saveClasses = async () => {
     try {
-      await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/classes`, {
+      await fetch(`/make-server-2fad19e1/teacher/classes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -183,7 +183,7 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
 
   const saveTasks = async (tasks) => {
     try {
-      await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/tasks`, {
+      await fetch(`/make-server-2fad19e1/teacher/tasks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -369,7 +369,7 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
   const handleUpdateProfile = async (profileData) => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/profile/update`,
+        `/make-server-2fad19e1/teacher/profile/update`,
         {
           method: 'POST',
           headers: {

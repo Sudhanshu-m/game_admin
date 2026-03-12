@@ -20,9 +20,9 @@ A comprehensive portal for dental colleges featuring distinct teacher (Admin) an
 
 - **Technical Stack**:
   - **Frontend**: React (Vite) with Tailwind CSS and Shadcn UI.
-  - **Backend**: Supabase Edge Functions (Hono/Deno).
-  - **Database**: Supabase Auth + Deno KV for rapid state management.
-  - **Deployment**: Vercel (Frontend) and Supabase (Functions).
+  - **Backend**: Node.js/Express server (`server/index.js`) running on port 3001 (proxied via Vite).
+  - **Database**: Supabase Auth + PostgreSQL KV table (`kv_store_2fad19e1`) for state management.
+  - **Workflows**: "Start application" (Vite on port 5000) + "Backend Server" (Express on port 3001).
 
 ## Recent Changes
 

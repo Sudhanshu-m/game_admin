@@ -116,7 +116,7 @@ export function ClassView({ classData, students, onBack, onAddTask, onAddQuiz, a
         const studentEmails = enrolledStudents.map(s => s.email);
         
         const response = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/students-batch-data`,
+          `/make-server-2fad19e1/teacher/students-batch-data`,
           {
             method: 'POST',
             headers: {
@@ -279,7 +279,7 @@ export function ClassView({ classData, students, onBack, onAddTask, onAddQuiz, a
     
     try {
       // Fetch student tasks from backend
-      const url = `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/student-tasks/${encodeURIComponent(student.email)}`;
+      const url = `/make-server-2fad19e1/teacher/student-tasks/${encodeURIComponent(student.email)}`;
       console.log('Fetching from URL:', url);
       console.log('Authorization header:', `Bearer ${accessToken.substring(0, 20)}...`);
       

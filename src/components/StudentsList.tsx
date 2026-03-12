@@ -40,11 +40,11 @@ export function StudentsList({ students, onSelectStudent, classes, onRefresh }) 
               // Parallelize per-student fetches
               const [streakResponse, tasksResponse] = await Promise.all([
                 fetch(
-                  `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/student-streak/${student.email}`,
+                  `/make-server-2fad19e1/teacher/student-streak/${student.email}`,
                   { headers: { 'Authorization': `Bearer ${accessToken}` } }
                 ),
                 fetch(
-                  `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/student-tasks/${student.email}`,
+                  `/make-server-2fad19e1/teacher/student-tasks/${student.email}`,
                   { headers: { 'Authorization': `Bearer ${accessToken}` } }
                 )
               ]);

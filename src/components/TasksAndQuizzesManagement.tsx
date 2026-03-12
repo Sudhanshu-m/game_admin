@@ -134,7 +134,7 @@ export function TasksAndQuizzesManagement({
     try {
       // Fetch all task statistics in one API call
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/task-stats`,
+        `/make-server-2fad19e1/teacher/task-stats`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -368,7 +368,7 @@ export function TasksAndQuizzesManagement({
 
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/task-students`,
+        `/make-server-2fad19e1/teacher/task-students`,
         {
           method: "POST",
           headers: {
@@ -388,7 +388,7 @@ export function TasksAndQuizzesManagement({
 
         // Fetch existing grades for these students
         const gradesResponse = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/task-grades/${taskId}`,
+          `/make-server-2fad19e1/teacher/task-grades/${taskId}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -456,7 +456,7 @@ export function TasksAndQuizzesManagement({
 
       // 4. API Call to save to database
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/task-grade`,
+        `/make-server-2fad19e1/teacher/task-grade`,
         {
           method: "POST",
           headers: {

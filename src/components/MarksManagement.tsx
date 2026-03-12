@@ -93,7 +93,7 @@ export function MarksManagement({ students, classes, accessToken, projectId }) {
     
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1/teacher/grades`,
+        `/make-server-2fad19e1/teacher/grades`,
         {
           method: 'POST',
           headers: {
