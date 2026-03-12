@@ -353,8 +353,53 @@ app.get('/make-server-2fad19e1/teacher/all-students', async (req, res) => {
         registeredAt: u.created_at,
       };
     });
-    return res.json(result);
+    return res.json({ students: result });
   } catch (err) {
+    console.error('All students error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Task statistics
+app.get('/make-server-2fad19e1/teacher/task-stats', async (req, res) => {
+  try {
+    const user = await getUser(req.headers.authorization);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const tasks = (await kvGet(`tasks:${user.id}`)) || [];
+    const tasksList = Array.isArray(tasks) ? tasks : [];
+    const allStudentsRaw = (await kvGet(`students:${user.id}`)) || [];
+    const allStudents = Array.isArray(allStudentsRaw) ? allStudentsRaw : [];
+
+    const taskStats = {};
+    for (const task of tasksList) {
+      const relevantStudents = task.classId
+        ? allStudents.filter(s => s.classId === task.classId)
+        : allStudents;
+      const totalStudents = relevantStudents.length;
+      let completed = 0;
+      let attempted = 0;
+      const taskGrades = (await kvGet(`task_grades:${task.id}`)) || {};
+      for (const student of relevantStudents) {
+        if (taskGrades[student.email]) { completed++; attempted++; }
+        else {
+          const studentTasks = (await kvGet(`student_tasks:${student.email}`)) || [];
+          const studentTask = Array.isArray(studentTasks) ? studentTasks.find(t => t.id === task.id) : null;
+          if (studentTask?.completed) { completed++; attempted++; }
+        }
+      }
+      taskStats[task.id] = {
+        totalStudents,
+        completed,
+        attempted,
+        completionRate: totalStudents > 0 ? Math.round((completed / totalStudents) * 100) : 0,
+        attemptRate: totalStudents > 0 ? Math.round((attempted / totalStudents) * 100) : 0,
+      };
+    }
+
+    return res.json({ taskStats });
+  } catch (err) {
+    console.error('Task stats error:', err);
     return res.status(500).json({ error: err.message });
   }
 });
@@ -513,6 +558,214 @@ app.post('/make-server-2fad19e1/student/profile/update', async (req, res) => {
     const existing = (await kvGet(profileKey)) || {};
     await kvSet(profileKey, { ...existing, ...req.body, email: user.email });
     return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Health check
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+// Teacher: get student streak
+app.get('/make-server-2fad19e1/teacher/student-streak/:email', async (req, res) => {
+  try {
+    const user = await getUser(req.headers.authorization);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const streakData = (await kvGet(`student_streak:${req.params.email}`)) || { currentStreak: 0, longestStreak: 0, dates: [] };
+    return res.json({ streakData });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Teacher: get student tasks
+app.get('/make-server-2fad19e1/teacher/student-tasks/:email', async (req, res) => {
+  try {
+    const user = await getUser(req.headers.authorization);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const tasks = (await kvGet(`student_tasks:${req.params.email}`)) || [];
+    return res.json({ tasks });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Teacher: assign student to class
+app.post('/make-server-2fad19e1/teacher/assign-student', async (req, res) => {
+  try {
+    const user = await getUser(req.headers.authorization);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const { studentId, studentEmail, classId, className } = req.body;
+    if (!studentEmail || !classId) return res.status(400).json({ error: 'studentEmail and classId are required' });
+
+    const supabase = getSupabaseClient(true);
+    const { data: authData } = await supabase.auth.admin.getUserById(studentId);
+    const studentName = authData?.user?.user_metadata?.name || studentEmail.split('@')[0];
+    const avatar = studentName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+
+    const studentsKey = `students:${user.id}`;
+    const existingStudents = (await kvGet(studentsKey)) || [];
+    const studentsList = Array.isArray(existingStudents) ? existingStudents : [];
+    const existingIndex = studentsList.findIndex(s => s.email === studentEmail || s.id === studentId);
+
+    const studentEntry = { id: studentId, name: studentName, email: studentEmail, avatar, classId, className, status: 'active', addedAt: new Date().toISOString() };
+    if (existingIndex >= 0) {
+      studentsList[existingIndex] = { ...studentsList[existingIndex], classId, className };
+    } else {
+      studentsList.push(studentEntry);
+    }
+    await kvSet(studentsKey, studentsList);
+
+    const profileKey = `student_profile:${studentEmail}`;
+    const existingProfile = (await kvGet(profileKey)) || {};
+    await kvSet(profileKey, { ...existingProfile, classId, className, email: studentEmail });
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Assign student error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Teacher: unassign student
+app.post('/make-server-2fad19e1/teacher/unassign-student', async (req, res) => {
+  try {
+    const user = await getUser(req.headers.authorization);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const { studentId } = req.body;
+
+    const studentsKey = `students:${user.id}`;
+    const existingStudents = (await kvGet(studentsKey)) || [];
+    const studentsList = Array.isArray(existingStudents) ? existingStudents : [];
+    const student = studentsList.find(s => s.id === studentId);
+    const updated = studentsList.filter(s => s.id !== studentId);
+    await kvSet(studentsKey, updated);
+
+    if (student?.email) {
+      const profileKey = `student_profile:${student.email}`;
+      const existingProfile = (await kvGet(profileKey)) || {};
+      await kvSet(profileKey, { ...existingProfile, classId: null, className: null });
+    }
+
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Teacher: batch student data
+app.post('/make-server-2fad19e1/teacher/students-batch-data', async (req, res) => {
+  try {
+    const user = await getUser(req.headers.authorization);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const { emails } = req.body;
+    if (!Array.isArray(emails)) return res.status(400).json({ error: 'emails array required' });
+
+    const results = {};
+    for (const email of emails) {
+      const streak = (await kvGet(`student_streak:${email}`)) || { currentStreak: 0, longestStreak: 0, dates: [] };
+      const tasks = (await kvGet(`student_tasks:${email}`)) || [];
+      const grades = (await kvGet(`student_grades:${email}`)) || [];
+      results[email] = { streak, taskCount: Array.isArray(tasks) ? tasks.length : 0, completedCount: Array.isArray(tasks) ? tasks.filter(t => t.completed).length : 0, grades };
+    }
+    return res.json({ students: results });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Teacher: save single task grade
+app.post('/make-server-2fad19e1/teacher/task-grade', async (req, res) => {
+  try {
+    const user = await getUser(req.headers.authorization);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const { taskId, studentEmail, grade } = req.body;
+    if (!taskId || !studentEmail || grade === undefined) return res.status(400).json({ error: 'Missing fields' });
+
+    const grades = (await kvGet(`task_grades:${taskId}`)) || {};
+    grades[studentEmail] = grade;
+    await kvSet(`task_grades:${taskId}`, grades);
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Student: submit quiz
+app.post('/make-server-2fad19e1/student/quiz/submit', async (req, res) => {
+  try {
+    const user = await getUser(req.headers.authorization);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const { taskId, score, maxScore, answers } = req.body;
+
+    const gradeEntry = {
+      taskId, task_id: taskId,
+      studentEmail: user.email,
+      subject: 'Quiz',
+      assignment: 'Quiz',
+      grade: score,
+      score,
+      maxScore: maxScore || 100,
+      date: new Date().toISOString().split('T')[0],
+      answers,
+    };
+
+    const studentGradesKey = `student_grades:${user.email}`;
+    const studentGrades = (await kvGet(studentGradesKey)) || [];
+    const gradesList = Array.isArray(studentGrades) ? studentGrades : [];
+    const existingIndex = gradesList.findIndex(g => g.taskId === taskId || g.task_id === taskId);
+    if (existingIndex >= 0) gradesList[existingIndex] = gradeEntry;
+    else gradesList.push(gradeEntry);
+    await kvSet(studentGradesKey, gradesList);
+
+    const studentTasksKey = `student_tasks:${user.email}`;
+    const studentTasks = (await kvGet(studentTasksKey)) || [];
+    const updatedTasks = Array.isArray(studentTasks) ? studentTasks.map(t => t.id === taskId ? { ...t, completed: true, grade: score } : t) : [];
+    await kvSet(studentTasksKey, updatedTasks);
+
+    await trackStudentActivity(user.email);
+
+    const percentage = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+    const notifKey = `notifications:${user.email}`;
+    const notifs = (await kvGet(notifKey)) || [];
+    const notifsList = Array.isArray(notifs) ? notifs : [];
+    notifsList.push({
+      id: `notif-${Date.now()}`,
+      type: 'grade',
+      title: `Quiz Submitted!`,
+      message: `You scored ${score}/${maxScore} points (${percentage}%)`,
+      createdAt: new Date().toISOString(),
+      read: false,
+    });
+    await kvSet(notifKey, notifsList);
+
+    return res.json({ success: true, percentage });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Quest endpoint (student)
+app.get('/make-server-2fad19e1/quest', async (req, res) => {
+  try {
+    const user = await getUser(req.headers.authorization);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const tasks = (await kvGet(`student_tasks:${user.email}`)) || [];
+    const tasksList = Array.isArray(tasks) ? tasks : [];
+    const pending = tasksList.filter(t => !t.completed);
+    return res.json({ quest: pending[0] || null, tasks: tasksList });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Debug students
+app.get('/make-server-2fad19e1/debug/students', async (req, res) => {
+  try {
+    const user = await getUser(req.headers.authorization);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const students = (await kvGet(`students:${user.id}`)) || [];
+    return res.json({ students, count: Array.isArray(students) ? students.length : 0 });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
