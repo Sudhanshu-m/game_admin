@@ -4,8 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 const app = new Hono();
 
-// KV store for dental college management
-const kv = await Deno.openKv();
+const KV_TABLE = "kv_store_2fad19e1";
 
 // Helper to get Supabase client
 const getSupabaseClient = (isServiceRole = false) => {
@@ -16,9 +15,38 @@ const getSupabaseClient = (isServiceRole = false) => {
   return createClient(url, key);
 };
 
+// KV helpers using Supabase PostgreSQL table instead of Deno.openKv()
+const kvGet = async (key: string): Promise<any> => {
+  const supabase = getSupabaseClient(true);
+  const { data, error } = await supabase
+    .from(KV_TABLE)
+    .select("value")
+    .eq("key", key)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data?.value ?? null;
+};
+
+const kvSet = async (key: string, value: any): Promise<void> => {
+  const supabase = getSupabaseClient(true);
+  const { error } = await supabase
+    .from(KV_TABLE)
+    .upsert({ key, value }, { onConflict: "key" });
+  if (error) throw new Error(error.message);
+};
+
+const kvGetByPrefix = async (prefix: string): Promise<{ key: string; value: any }[]> => {
+  const supabase = getSupabaseClient(true);
+  const { data, error } = await supabase
+    .from(KV_TABLE)
+    .select("key, value")
+    .like("key", prefix + "%");
+  if (error) throw new Error(error.message);
+  return data ?? [];
+};
+
 // CORS configuration - MUST BE FIRST
 app.use("*", async (c, next) => {
-  // Handle preflight requests
   if (c.req.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
@@ -48,7 +76,7 @@ async function trackStudentActivity(email: string) {
   const now = new Date();
   const today = now.toISOString().split("T")[0];
 
-  const streakData = (await kv.get(streakKey)) || {
+  const streakData = (await kvGet(streakKey)) || {
     currentStreak: 0,
     longestStreak: 0,
     lastActivityDate: null,
@@ -78,7 +106,7 @@ async function trackStudentActivity(email: string) {
     streakData.dates.push(today);
   }
 
-  await kv.set(streakKey, streakData);
+  await kvSet(streakKey, streakData);
   return streakData;
 }
 
@@ -93,71 +121,86 @@ app.get("/make-server-2fad19e1/teacher/data", async (c) => {
     }
 
     const supabase = getSupabaseClient(true);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser(accessToken);
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
 
     if (error || !user) {
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    const students = (await kv.get(`students:${user.id}`)) || [];
-    
+    const students = (await kvGet(`students:${user.id}`)) || [];
+
     // Fetch all classes from all teachers to make them shared
-    const allClassesResponse = await kv.getByPrefix({ prefix: ["classes:"] });
+    const allClassesEntries = await kvGetByPrefix("classes:");
     const classesMap = new Map();
-    for await (const entry of allClassesResponse) {
+    for (const entry of allClassesEntries) {
       if (Array.isArray(entry.value)) {
-        entry.value.forEach(cls => {
+        entry.value.forEach((cls: any) => {
           classesMap.set(cls.id, cls);
         });
       }
     }
     const classes = Array.from(classesMap.values());
-    
-    const tasks = (await kv.get(`tasks:${user.id}`)) || [];
-    const gradesKey = `dental_college_grades:${user.id}`;
-    const grades = (await kv.get(gradesKey)) || [];
 
-    return c.json({
-      students,
-      classes,
-      tasks,
-      grades,
-    });
+    const tasks = (await kvGet(`tasks:${user.id}`)) || [];
+    const grades = (await kvGet(`dental_college_grades:${user.id}`)) || [];
+
+    return c.json({ students, classes, tasks, grades });
   } catch (error) {
     console.log("Teacher data error:", error);
     return c.json({ error: "Failed to get teacher data: " + error.message }, 500);
   }
 });
 
-// Create a new task/quiz
+// Save students
+app.post("/make-server-2fad19e1/teacher/students", async (c) => {
+  try {
+    const accessToken = c.req.header("Authorization")?.split(" ")[1];
+    if (!accessToken) return c.json({ error: "Unauthorized" }, 401);
+    const supabase = getSupabaseClient(true);
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+    if (error || !user) return c.json({ error: "Unauthorized" }, 401);
+    const { students } = await c.req.json();
+    await kvSet(`students:${user.id}`, students || []);
+    return c.json({ success: true });
+  } catch (error) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Save classes
+app.post("/make-server-2fad19e1/teacher/classes", async (c) => {
+  try {
+    const accessToken = c.req.header("Authorization")?.split(" ")[1];
+    if (!accessToken) return c.json({ error: "Unauthorized" }, 401);
+    const supabase = getSupabaseClient(true);
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+    if (error || !user) return c.json({ error: "Unauthorized" }, 401);
+    const { classes } = await c.req.json();
+    await kvSet(`classes:${user.id}`, classes || []);
+    return c.json({ success: true });
+  } catch (error) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Create a new task
 app.post("/make-server-2fad19e1/teacher/tasks", async (c) => {
   try {
     const accessToken = c.req.header("Authorization")?.split(" ")[1];
-    if (!accessToken) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
+    if (!accessToken) return c.json({ error: "Unauthorized" }, 401);
 
     const supabase = getSupabaseClient(true);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser(accessToken);
-
-    if (error || !user) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+    if (error || !user) return c.json({ error: "Unauthorized" }, 401);
 
     const task = await c.req.json();
-    if (!task || typeof task !== "object" || !task.title || typeof task.title !== "string" || !task.title.trim()) {
+    if (!task || !task.title || !task.title.trim()) {
       return c.json({ error: "Invalid task payload — title is required" }, 400);
     }
 
     const newTask = {
       id: task.id || `task-${Date.now()}`,
-      title: task.title || "",
+      title: task.title,
       description: task.description || "",
       maxPoints: task.maxPoints || task.points || 100,
       points: task.points || task.maxPoints || 100,
@@ -173,29 +216,26 @@ app.post("/make-server-2fad19e1/teacher/tasks", async (c) => {
       teacherId: user.id,
     };
 
-    // Save to teacher's tasks list
     const tasksKey = `tasks:${user.id}`;
-    const existingTasks = await kv.get(tasksKey);
+    const existingTasks = (await kvGet(tasksKey)) || [];
     const tasksList: any[] = Array.isArray(existingTasks) ? existingTasks : [];
     tasksList.push(newTask);
-    await kv.set(tasksKey, tasksList);
+    await kvSet(tasksKey, tasksList);
 
     // Assign to students in the class
     if (newTask.classId) {
       try {
-        const studentsKey = `students:${user.id}`;
-        const allStudentsRaw = await kv.get(studentsKey);
+        const allStudentsRaw = (await kvGet(`students:${user.id}`)) || [];
         const allStudents: any[] = Array.isArray(allStudentsRaw) ? allStudentsRaw : [];
         const classStudents = allStudents.filter(
-          (s) => s && s.classId === newTask.classId && s.email,
+          (s: any) => s && s.classId === newTask.classId && s.email
         );
-
         for (const student of classStudents) {
           const studentTasksKey = `student_tasks:${student.email}`;
-          const existingStudentTasks = await kv.get(studentTasksKey);
-          const studentTasks: any[] = Array.isArray(existingStudentTasks) ? existingStudentTasks : [];
+          const existing = (await kvGet(studentTasksKey)) || [];
+          const studentTasks: any[] = Array.isArray(existing) ? existing : [];
           studentTasks.push({ ...newTask, completed: false });
-          await kv.set(studentTasksKey, studentTasks);
+          await kvSet(studentTasksKey, studentTasks);
         }
       } catch (assignError) {
         console.log("Student assignment error (non-fatal):", assignError);
@@ -209,94 +249,7 @@ app.post("/make-server-2fad19e1/teacher/tasks", async (c) => {
   }
 });
 
-// Save grade for a student's task
-app.post("/make-server-2fad19e1/teacher/grades", async (c) => {
-  try {
-    const accessToken = c.req.header("Authorization")?.split(" ")[1];
-    if (!accessToken) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
-
-    const supabase = getSupabaseClient(true);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser(accessToken);
-
-    if (error || !user) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
-
-    const body = await c.req.json();
-    const { taskId, studentEmail, grade } = body;
-
-    if (!taskId || !studentEmail || !grade) {
-      return c.json({ error: "Missing required fields" }, 400);
-    }
-
-    // Get existing grades for this task
-    const grades = (await kv.get(`task_grades:${taskId}`)) || {};
-    grades[studentEmail] = grade;
-    await kv.set(`task_grades:${taskId}`, grades);
-
-    // Save to teacher's grades log
-    const teacherGradesKey = `dental_college_grades:${user.id}`;
-    const teacherGrades = (await kv.get(teacherGradesKey)) || [];
-    
-    // Also save to student's personal grades for quick access
-    const studentGradesKey = `student_grades:${studentEmail}`;
-    const studentGrades = (await kv.get(studentGradesKey)) || [];
-    
-    const tasks = (await kv.get(`tasks:${user.id}`)) || [];
-    const task = tasks.find((t) => t.id === taskId);
-    
-    const gradeEntry = {
-      studentEmail,
-      subject: task?.subject || "General",
-      assignment: task?.title || "Assignment",
-      taskId: taskId,
-      task_id: taskId,
-      grade: grade,
-      score: grade,
-      maxScore: 100,
-      date: new Date().toISOString().split("T")[0],
-    };
-
-    const existingTeacherIndex = teacherGrades.findIndex(g => g.studentEmail === studentEmail && g.taskId === taskId);
-    if (existingTeacherIndex >= 0) {
-      teacherGrades[existingTeacherIndex] = gradeEntry;
-    } else {
-      teacherGrades.push(gradeEntry);
-    }
-    await kv.set(teacherGradesKey, teacherGrades);
-
-    const existingStudentIndex = studentGrades.findIndex(g => g.taskId === taskId);
-    if (existingStudentIndex >= 0) {
-      studentGrades[existingStudentIndex] = gradeEntry;
-    } else {
-      studentGrades.push(gradeEntry);
-    }
-    await kv.set(studentGradesKey, studentGrades);
-
-    // Update student's task status to mark as completed
-    const studentTasksKey = `student_tasks:${studentEmail}`;
-    const studentTasks = (await kv.get(studentTasksKey)) || [];
-    const updatedTasks = studentTasks.map(t => 
-      t.id === taskId ? { ...t, completed: true, grade } : t
-    );
-    await kv.set(studentTasksKey, updatedTasks);
-
-    // Track activity for streak
-    await trackStudentActivity(studentEmail);
-
-    return c.json({ success: true });
-  } catch (error) {
-    console.log("Save grade error:", error);
-    return c.json({ error: "Failed to save grade: " + error.message }, 500);
-  }
-});
-
-// Add task of the day - makes it appear in Tasks & Quizzes and student dashboards
+// Add task of the day
 app.post("/make-server-2fad19e1/teacher/add-task", async (c) => {
   try {
     const accessToken = c.req.header("Authorization")?.split(" ")[1];
@@ -307,74 +260,69 @@ app.post("/make-server-2fad19e1/teacher/add-task", async (c) => {
     if (error || !user) return c.json({ error: "Unauthorized" }, 401);
 
     const body = await c.req.json();
-    console.log("Create task request body:", body);
     const { title, description, points, date, class_id, type, subject, priority } = body;
+
+    if (!title || !title.trim()) {
+      return c.json({ error: "Title is required" }, 400);
+    }
 
     const task = {
       id: `task-${Date.now()}`,
-      title,
-      description,
+      title: title.trim(),
+      description: description || "",
       points: points || 50,
       maxPoints: points || 50,
       type: type || "task",
       date: date || new Date().toISOString().split("T")[0],
       dueDate: date || new Date().toISOString().split("T")[0],
-      classId: class_id,
+      classId: class_id || null,
       subject: subject || "General",
-      priority: (priority || "Medium").toLowerCase(),
+      priority: priority || "Medium",
       teacherId: user.id,
       createdAt: new Date().toISOString(),
       status: "active"
     };
 
-    // Add to teacher's tasks list
     const tasksKey = `tasks:${user.id}`;
-    const tasks = (await kv.get(tasksKey)) || [];
-    tasks.push(task);
-    await kv.set(tasksKey, tasks);
-    console.log("Task added to teacher list:", task.id);
+    const tasks = (await kvGet(tasksKey)) || [];
+    const tasksList: any[] = Array.isArray(tasks) ? tasks : [];
+    tasksList.push(task);
+    await kvSet(tasksKey, tasksList);
 
-    // Assign to students in the class (or all if no class specified)
+    // Assign to students
     let assignmentCount = 0;
     try {
-      const allProfiles = kv.list({ prefix: ["student_profile:"] });
-      for await (const entry of allProfiles) {
-        const student = entry.value;
-        // If class_id is specified, only assign to students in that class
-        // If class_id is null/undefined, assign to ALL students
-        const shouldAssign = !class_id || student?.classId === class_id;
-        
-        if (student && shouldAssign) {
-          const studentTasksKey = `student_tasks:${student.email}`;
-          const studentTasks = (await kv.get(studentTasksKey)) || [];
-          studentTasks.push({
-            ...task,
-            completed: false,
-            grade: null,
-          });
-          await kv.set(studentTasksKey, studentTasks);
+      const allStudentsRaw = (await kvGet(`students:${user.id}`)) || [];
+      const allStudents: any[] = Array.isArray(allStudentsRaw) ? allStudentsRaw : [];
+      const eligibleStudents = class_id
+        ? allStudents.filter((s: any) => s && s.classId === class_id && s.email)
+        : allStudents.filter((s: any) => s && s.email);
 
-          // Notify student
-          const notifKey = `notifications:${student.email}`;
-          const notifs = (await kv.get(notifKey)) || [];
-          notifs.push({
-            id: `notif-${Date.now()}-${student.email}`,
-            type: "task",
-            title: `New Task: ${title}`,
-            message: description,
-            createdAt: new Date().toISOString(),
-            read: false,
-            taskId: task.id
-          });
-          await kv.set(notifKey, notifs);
-          assignmentCount++;
-        }
+      for (const student of eligibleStudents) {
+        const studentTasksKey = `student_tasks:${student.email}`;
+        const existing = (await kvGet(studentTasksKey)) || [];
+        const studentTasks: any[] = Array.isArray(existing) ? existing : [];
+        studentTasks.push({ ...task, completed: false, grade: null });
+        await kvSet(studentTasksKey, studentTasks);
+
+        const notifKey = `notifications:${student.email}`;
+        const notifs = (await kvGet(notifKey)) || [];
+        const notifsList: any[] = Array.isArray(notifs) ? notifs : [];
+        notifsList.push({
+          id: `notif-${Date.now()}-${student.email}`,
+          type: "task",
+          title: `New Task: ${title}`,
+          message: description || "",
+          createdAt: new Date().toISOString(),
+          read: false,
+          taskId: task.id
+        });
+        await kvSet(notifKey, notifsList);
+        assignmentCount++;
       }
     } catch (e) {
-      console.log("Error during student assignment loop:", e);
+      console.log("Error during student assignment:", e);
     }
-    
-    console.log(`Assigned task to ${assignmentCount} students${class_id ? ' in class ' + class_id : ' (all students)'}`);
 
     return c.json({ success: true, task, assignedCount: assignmentCount });
   } catch (error) {
@@ -383,14 +331,168 @@ app.post("/make-server-2fad19e1/teacher/add-task", async (c) => {
   }
 });
 
-// Keep quest endpoint for backward compatibility
+// Quest backward compat
 app.post("/make-server-2fad19e1/teacher/quest", async (c) => {
   return c.redirect(307, "/make-server-2fad19e1/teacher/add-task");
 });
 
+// Save grade for a student's task
+app.post("/make-server-2fad19e1/teacher/grades", async (c) => {
+  try {
+    const accessToken = c.req.header("Authorization")?.split(" ")[1];
+    if (!accessToken) return c.json({ error: "Unauthorized" }, 401);
+
+    const supabase = getSupabaseClient(true);
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+    if (error || !user) return c.json({ error: "Unauthorized" }, 401);
+
+    const body = await c.req.json();
+    const { taskId, studentEmail, grade } = body;
+
+    if (!taskId || !studentEmail || !grade) {
+      return c.json({ error: "Missing required fields" }, 400);
+    }
+
+    const grades = (await kvGet(`task_grades:${taskId}`)) || {};
+    grades[studentEmail] = grade;
+    await kvSet(`task_grades:${taskId}`, grades);
+
+    const teacherGradesKey = `dental_college_grades:${user.id}`;
+    const teacherGrades = (await kvGet(teacherGradesKey)) || [];
+    const teacherGradesList: any[] = Array.isArray(teacherGrades) ? teacherGrades : [];
+
+    const studentGradesKey = `student_grades:${studentEmail}`;
+    const studentGrades = (await kvGet(studentGradesKey)) || [];
+    const studentGradesList: any[] = Array.isArray(studentGrades) ? studentGrades : [];
+
+    const tasks = (await kvGet(`tasks:${user.id}`)) || [];
+    const task = Array.isArray(tasks) ? tasks.find((t: any) => t.id === taskId) : null;
+
+    const gradeEntry = {
+      studentEmail,
+      subject: task?.subject || "General",
+      assignment: task?.title || "Assignment",
+      taskId,
+      task_id: taskId,
+      grade,
+      score: grade,
+      maxScore: 100,
+      date: new Date().toISOString().split("T")[0],
+    };
+
+    const existingTeacherIndex = teacherGradesList.findIndex(
+      (g: any) => g.studentEmail === studentEmail && g.taskId === taskId
+    );
+    if (existingTeacherIndex >= 0) {
+      teacherGradesList[existingTeacherIndex] = gradeEntry;
+    } else {
+      teacherGradesList.push(gradeEntry);
+    }
+    await kvSet(teacherGradesKey, teacherGradesList);
+
+    const existingStudentIndex = studentGradesList.findIndex((g: any) => g.taskId === taskId);
+    if (existingStudentIndex >= 0) {
+      studentGradesList[existingStudentIndex] = gradeEntry;
+    } else {
+      studentGradesList.push(gradeEntry);
+    }
+    await kvSet(studentGradesKey, studentGradesList);
+
+    const studentTasksKey = `student_tasks:${studentEmail}`;
+    const studentTasks = (await kvGet(studentTasksKey)) || [];
+    const studentTasksList: any[] = Array.isArray(studentTasks) ? studentTasks : [];
+    const updatedTasks = studentTasksList.map((t: any) =>
+      t.id === taskId ? { ...t, completed: true, grade } : t
+    );
+    await kvSet(studentTasksKey, updatedTasks);
+
+    await trackStudentActivity(studentEmail);
+
+    return c.json({ success: true });
+  } catch (error) {
+    console.log("Save grade error:", error);
+    return c.json({ error: "Failed to save grade: " + error.message }, 500);
+  }
+});
+
+// Get all registered students
+app.get("/make-server-2fad19e1/teacher/all-students", async (c) => {
+  try {
+    const accessToken = c.req.header("Authorization")?.split(" ")[1];
+    if (!accessToken) return c.json({ error: "Unauthorized" }, 401);
+
+    const supabase = getSupabaseClient(true);
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+    if (error || !user) return c.json({ error: "Unauthorized" }, 401);
+
+    const { data: authUsers } = await supabase.auth.admin.listUsers();
+    const students = authUsers?.users?.filter((u: any) => u.user_metadata?.role === "student") || [];
+
+    const profileEntries = await kvGetByPrefix("student_profile:");
+    const profileMap = new Map();
+    for (const entry of profileEntries) {
+      if (entry.value && entry.value.email) {
+        profileMap.set(entry.value.email, entry.value);
+      }
+    }
+
+    const teacherStudents = (await kvGet(`students:${user.id}`)) || [];
+    const assignedEmails = new Set(
+      Array.isArray(teacherStudents) ? teacherStudents.map((s: any) => s.email) : []
+    );
+
+    const result = students.map((u: any) => {
+      const profile = profileMap.get(u.email) || {};
+      const name = u.user_metadata?.name || u.email?.split("@")[0] || "Student";
+      return {
+        id: u.id,
+        name,
+        email: u.email,
+        avatar: name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2),
+        currentLevel: profile.currentLevel || 1,
+        totalPoints: profile.totalPoints || 0,
+        gameProgress: profile.gameProgress || 0,
+        lastActive: u.last_sign_in_at || u.created_at,
+        status: "active",
+        subjects: profile.subjects || [],
+        averageGrade: 0,
+        classId: profile.classId || null,
+        className: profile.className || null,
+        isRegistered: true,
+        isAssigned: assignedEmails.has(u.email),
+        registeredAt: u.created_at,
+      };
+    });
+
+    return c.json(result);
+  } catch (error) {
+    console.log("All students error:", error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Update teacher profile
+app.post("/make-server-2fad19e1/teacher/profile/update", async (c) => {
+  try {
+    const accessToken = c.req.header("Authorization")?.split(" ")[1];
+    if (!accessToken) return c.json({ error: "Unauthorized" }, 401);
+    const supabase = getSupabaseClient(true);
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+    if (error || !user) return c.json({ error: "Unauthorized" }, 401);
+    const body = await c.req.json();
+    const { error: updateError } = await supabase.auth.admin.updateUserById(user.id, {
+      user_metadata: { ...user.user_metadata, ...body },
+    });
+    if (updateError) return c.json({ error: updateError.message }, 400);
+    return c.json({ success: true });
+  } catch (error) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
 // --- STUDENT ENDPOINTS ---
 
-// Get student data with tasks, grades, and streak
+// Get student data
 app.get("/make-server-2fad19e1/student/data", async (c) => {
   try {
     const accessToken = c.req.header("Authorization")?.split(" ")[1];
@@ -400,28 +502,36 @@ app.get("/make-server-2fad19e1/student/data", async (c) => {
     const { data: { user }, error } = await supabase.auth.getUser(accessToken);
     if (error || !user) return c.json({ error: "Unauthorized" }, 401);
 
-    // Get all data for the student
-    const allTasks = (await kv.get(`student_tasks:${user.email}`)) || [];
-    const gradesKey = `student_grades:${user.email}`;
-    const allGrades = (await kv.get(gradesKey)) || [];
-    const streakData = (await kv.get(`student_streak:${user.email}`)) || { currentStreak: 0, longestStreak: 0, dates: [] };
-    
-    // Mark tasks as completed if they have grades
-    const tasksWithCompletion = allTasks.map(task => {
-      const hasGrade = allGrades.some(grade => grade.taskId === task.id || grade.task_id === task.id);
+    const allTasks = (await kvGet(`student_tasks:${user.email}`)) || [];
+    const allGrades = (await kvGet(`student_grades:${user.email}`)) || [];
+    const streakData = (await kvGet(`student_streak:${user.email}`)) || {
+      currentStreak: 0,
+      longestStreak: 0,
+      dates: [],
+    };
+
+    const tasksList: any[] = Array.isArray(allTasks) ? allTasks : [];
+    const gradesList: any[] = Array.isArray(allGrades) ? allGrades : [];
+
+    const tasksWithCompletion = tasksList.map((task: any) => {
+      const hasGrade = gradesList.some(
+        (grade: any) => grade.taskId === task.id || grade.task_id === task.id
+      );
       return {
         ...task,
         completed: task.completed || hasGrade,
-        grade: allGrades.find(g => g.taskId === task.id || g.task_id === task.id)?.grade
+        grade: gradesList.find(
+          (g: any) => g.taskId === task.id || g.task_id === task.id
+        )?.grade,
       };
     });
 
     return c.json({
       tasks: tasksWithCompletion,
-      grades: allGrades,
+      grades: gradesList,
       streakData,
       assignedClass: null,
-      adminMessage: null
+      adminMessage: null,
     });
   } catch (error) {
     console.log("Student data error:", error);
@@ -438,12 +548,11 @@ app.get("/make-server-2fad19e1/student/dashboard", async (c) => {
     const { data: { user }, error } = await supabase.auth.getUser(accessToken);
     if (error || !user) return c.json({ error: "Unauthorized" }, 401);
 
-    const tasks = (await kv.get(`student_tasks:${user.email}`)) || [];
-    const streak = (await kv.get(`student_streak:${user.email}`)) || { currentStreak: 0, dates: [] };
-    const quest = (await kv.get("daily_quest")) || null;
-    const profile = (await kv.get(`student_profile:${user.email}`)) || { totalPoints: 0, currentLevel: 1 };
+    const tasks = (await kvGet(`student_tasks:${user.email}`)) || [];
+    const streak = (await kvGet(`student_streak:${user.email}`)) || { currentStreak: 0, dates: [] };
+    const profile = (await kvGet(`student_profile:${user.email}`)) || { totalPoints: 0, currentLevel: 1 };
 
-    return c.json({ tasks, streak, quest, profile });
+    return c.json({ tasks, streak, quest: null, profile });
   } catch (error) {
     return c.json({ error: error.message }, 500);
   }
@@ -455,7 +564,7 @@ app.get("/make-server-2fad19e1/student/notifications", async (c) => {
   const { data: { user } } = await supabase.auth.getUser(accessToken);
   if (!user) return c.json({ error: "Unauthorized" }, 401);
 
-  const notifs = (await kv.get(`notifications:${user.email}`)) || [];
+  const notifs = (await kvGet(`notifications:${user.email}`)) || [];
   return c.json({ notifications: notifs });
 });
 
@@ -466,9 +575,12 @@ app.post("/make-server-2fad19e1/student/notifications/read", async (c) => {
   const { notificationId } = await c.req.json();
 
   const key = `notifications:${user.email}`;
-  const notifs = (await kv.get(key)) || [];
-  const updated = notifs.map(n => n.id === notificationId ? { ...n, read: true } : n);
-  await kv.set(key, updated);
+  const notifs = (await kvGet(key)) || [];
+  const notifsList: any[] = Array.isArray(notifs) ? notifs : [];
+  const updated = notifsList.map((n: any) =>
+    n.id === notificationId ? { ...n, read: true } : n
+  );
+  await kvSet(key, updated);
   return c.json({ success: true });
 });
 
