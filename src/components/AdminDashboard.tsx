@@ -590,8 +590,8 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
           <AddDailyTask
             selectedClass={selectedClass}
             classes={classes}
+            students={allStudents}
             onBack={() => setActiveView(selectedClass ? 'class-view' : 'dashboard')}
-            accessToken={accessToken}
             onTaskCreated={(newTask) => {
               setTasks(prev => [newTask, ...prev]);
             }}

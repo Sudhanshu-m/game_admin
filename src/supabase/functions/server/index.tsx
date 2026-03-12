@@ -151,36 +151,54 @@ app.post("/make-server-2fad19e1/teacher/tasks", async (c) => {
     }
 
     const task = await c.req.json();
-    const tasksKey = `tasks:${user.id}`;
-    const tasks = (await kv.get(tasksKey)) || [];
+    if (!task || typeof task !== "object" || !task.title || typeof task.title !== "string" || !task.title.trim()) {
+      return c.json({ error: "Invalid task payload — title is required" }, 400);
+    }
 
     const newTask = {
-      ...task,
       id: task.id || `task-${Date.now()}`,
+      title: task.title || "",
+      description: task.description || "",
+      maxPoints: task.maxPoints || task.points || 100,
+      points: task.points || task.maxPoints || 100,
+      dueDate: task.dueDate || task.date || new Date().toISOString().split("T")[0],
+      date: task.date || task.dueDate || new Date().toISOString().split("T")[0],
+      classId: task.classId || null,
+      className: task.className || null,
+      subject: task.subject || "General",
+      priority: task.priority || "Medium",
+      type: task.type || "task",
+      status: task.status || "active",
       createdAt: new Date().toISOString(),
       teacherId: user.id,
     };
 
-    tasks.push(newTask);
-    await kv.set(tasksKey, tasks);
+    // Save to teacher's tasks list
+    const tasksKey = `tasks:${user.id}`;
+    const existingTasks = await kv.get(tasksKey);
+    const tasksList: any[] = Array.isArray(existingTasks) ? existingTasks : [];
+    tasksList.push(newTask);
+    await kv.set(tasksKey, tasksList);
 
-    // Also assign to all students in the class
-    if (task.classId) {
-      const studentsKey = `students:${user.id}`;
-      const allStudents = (await kv.get(studentsKey)) || [];
-      const classStudents = allStudents.filter(
-        (s) => s.classId === task.classId,
-      );
+    // Assign to students in the class
+    if (newTask.classId) {
+      try {
+        const studentsKey = `students:${user.id}`;
+        const allStudentsRaw = await kv.get(studentsKey);
+        const allStudents: any[] = Array.isArray(allStudentsRaw) ? allStudentsRaw : [];
+        const classStudents = allStudents.filter(
+          (s) => s && s.classId === newTask.classId && s.email,
+        );
 
-      for (const student of classStudents) {
-        const studentTasksKey = `student_tasks:${student.email}`;
-        const studentTasks = (await kv.get(studentTasksKey)) || [];
-        studentTasks.push({
-          ...newTask,
-          completed: false,
-          grade: null,
-        });
-        await kv.set(studentTasksKey, studentTasks);
+        for (const student of classStudents) {
+          const studentTasksKey = `student_tasks:${student.email}`;
+          const existingStudentTasks = await kv.get(studentTasksKey);
+          const studentTasks: any[] = Array.isArray(existingStudentTasks) ? existingStudentTasks : [];
+          studentTasks.push({ ...newTask, completed: false });
+          await kv.set(studentTasksKey, studentTasks);
+        }
+      } catch (assignError) {
+        console.log("Student assignment error (non-fatal):", assignError);
       }
     }
 
