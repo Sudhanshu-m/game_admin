@@ -14,28 +14,11 @@ import {
 } from './ui/select';
 import { ArrowLeft, Sparkles, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
-import { supabase } from '../utils/supabase/client';
+import { projectId } from '../utils/supabase/info';
 
-const KV_TABLE = 'kv_store_2fad19e1';
+const EDGE_URL = `https://${projectId}.supabase.co/functions/v1/make-server-2fad19e1`;
 
-async function kvGet(key: string): Promise<any> {
-  const { data, error } = await supabase
-    .from(KV_TABLE)
-    .select('value')
-    .eq('key', key)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  return data?.value;
-}
-
-async function kvSet(key: string, value: any): Promise<void> {
-  const { error } = await supabase
-    .from(KV_TABLE)
-    .upsert({ key, value }, { onConflict: 'key' });
-  if (error) throw new Error(error.message);
-}
-
-export function AddDailyTask({ selectedClass, classes = [], students = [], onBack, onTaskCreated }) {
+export function AddDailyTask({ selectedClass, classes = [], students = [], onBack, onTaskCreated, accessToken }) {
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
   const [selectedClassId, setSelectedClassId] = useState(selectedClass?.id || '');
@@ -54,21 +37,19 @@ export function AddDailyTask({ selectedClass, classes = [], students = [], onBac
       return;
     }
 
+    if (!accessToken) {
+      toast.error('Authentication error. Please log in again.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        toast.error('Authentication error. Please log in again.');
-        setLoading(false);
-        return;
-      }
-
       const pts = parseInt(rewardPoints) || 100;
-      const newTask = {
+      const taskPayload = {
         id: `task-${Date.now()}`,
-        title: taskTitle,
-        description: taskDescription,
+        title: taskTitle.trim(),
+        description: taskDescription.trim(),
         maxPoints: pts,
         points: pts,
         dueDate: dueDate,
@@ -79,44 +60,34 @@ export function AddDailyTask({ selectedClass, classes = [], students = [], onBac
         priority: priority,
         type: 'task',
         status: 'active',
-        createdAt: new Date().toISOString(),
-        teacherId: user.id,
       };
 
-      console.log('Creating task directly in DB:', newTask);
+      const response = await fetch(`${EDGE_URL}/teacher/tasks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(taskPayload),
+      });
 
-      // Write teacher's task list
-      const tasksKey = `tasks:${user.id}`;
-      const existingTasks = await kvGet(tasksKey);
-      const tasksList = Array.isArray(existingTasks) ? existingTasks : [];
-      tasksList.push(newTask);
-      await kvSet(tasksKey, tasksList);
-
-      // Assign to students in the class
-      const classStudents = activeClass
-        ? students.filter(s => s.classId === activeClass.id && s.email)
-        : students.filter(s => s.email);
-
-      let assignedCount = 0;
-      for (const student of classStudents) {
-        try {
-          const studentKey = `student_tasks:${student.email}`;
-          const existing = await kvGet(studentKey);
-          const studentTasks = Array.isArray(existing) ? existing : [];
-          studentTasks.push({ ...newTask, completed: false });
-          await kvSet(studentKey, studentTasks);
-          assignedCount++;
-        } catch (e) {
-          console.warn(`Failed to assign to ${student.email}:`, e);
-        }
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(errBody.error || `Server error ${response.status}`);
       }
+
+      const createdTask = await response.json();
+
+      const assignedCount = activeClass
+        ? students.filter(s => s.classId === activeClass.id).length
+        : students.length;
 
       const assignMsg = activeClass
         ? `Task created and assigned to ${assignedCount} student(s) in ${activeClass.name}!`
         : `Task created and assigned to ${assignedCount} student(s)!`;
       toast.success(assignMsg);
 
-      if (onTaskCreated) onTaskCreated(newTask);
+      if (onTaskCreated) onTaskCreated(createdTask);
       onBack();
     } catch (error: any) {
       console.error('Error creating task:', error);
