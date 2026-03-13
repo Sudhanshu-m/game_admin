@@ -602,6 +602,7 @@ app.post('/make-server-2fad19e1/student/profile/update', async (req, res) => {
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+app.get('/make-server-2fad19e1/health', (req, res) => res.json({ status: 'ok' }));
 
 // Teacher: get student streak
 app.get('/make-server-2fad19e1/teacher/student-streak/:email', async (req, res) => {
@@ -808,6 +809,10 @@ app.get('/make-server-2fad19e1/debug/students', async (req, res) => {
   }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Backend server running on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Backend server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;
