@@ -723,9 +723,66 @@ app.post('/make-server-2fad19e1/teacher/task-grade', async (req, res) => {
     const { taskId, studentEmail, grade } = req.body;
     if (!taskId || !studentEmail || grade === undefined) return res.status(400).json({ error: 'Missing fields' });
 
+    // Save to per-task grade lookup
     const grades = (await kvGet(`task_grades:${taskId}`)) || {};
     grades[studentEmail] = grade;
     await kvSet(`task_grades:${taskId}`, grades);
+
+    // Get the task details
+    const allTasks = (await kvGet(`tasks:${user.id}`)) || [];
+    const task = Array.isArray(allTasks) ? allTasks.find(t => t.id === taskId) : null;
+
+    // Convert letter grade to numeric score
+    const gradeToScore = { 'A+': 100, 'A': 95, 'A-': 90, 'B+': 85, 'B': 80, 'B-': 75, 'C+': 70, 'C': 65, 'C-': 60, 'D': 50, 'F': 0 };
+    const numericScore = gradeToScore[grade] ?? 0;
+    const maxPoints = task?.maxPoints || task?.points || 100;
+
+    const gradeEntry = {
+      taskId,
+      task_id: taskId,
+      studentEmail,
+      subject: task?.subject || task?.className || 'General',
+      assignment: task?.title || 'Assignment',
+      grade,
+      score: numericScore,
+      maxScore: 100,
+      maxPoints,
+      date: new Date().toISOString().split('T')[0],
+      gradedAt: new Date().toISOString(),
+    };
+
+    // Save to student's personal grades list
+    const studentGradesKey = `student_grades:${studentEmail}`;
+    const studentGrades = (await kvGet(studentGradesKey)) || [];
+    const studentGradesList = Array.isArray(studentGrades) ? studentGrades : [];
+    const existingIdx = studentGradesList.findIndex(g => g.taskId === taskId || g.task_id === taskId);
+    if (existingIdx >= 0) studentGradesList[existingIdx] = gradeEntry;
+    else studentGradesList.push(gradeEntry);
+    await kvSet(studentGradesKey, studentGradesList);
+
+    // Mark task as completed in student's task list
+    const studentTasksKey = `student_tasks:${studentEmail}`;
+    const studentTasks = (await kvGet(studentTasksKey)) || [];
+    const updatedTasks = Array.isArray(studentTasks)
+      ? studentTasks.map(t => t.id === taskId ? { ...t, completed: true, grade, score: numericScore } : t)
+      : [];
+    await kvSet(studentTasksKey, updatedTasks);
+
+    // Send notification to student
+    const notifKey = `notifications:${studentEmail}`;
+    const notifs = (await kvGet(notifKey)) || [];
+    const notifsList = Array.isArray(notifs) ? notifs : [];
+    notifsList.push({
+      id: `notif-grade-${taskId}-${Date.now()}`,
+      type: 'grade',
+      title: `Grade Assigned: ${grade}`,
+      message: `You received a grade of ${grade} for "${task?.title || 'your assignment'}"`,
+      createdAt: new Date().toISOString(),
+      read: false,
+      taskId,
+    });
+    await kvSet(notifKey, notifsList);
+
     return res.json({ success: true });
   } catch (err) {
     return res.status(500).json({ error: err.message });
