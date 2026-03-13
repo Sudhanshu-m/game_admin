@@ -362,7 +362,10 @@ app.get('/make-server-2fad19e1/teacher/all-students', async (req, res) => {
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
     const supabase = getSupabaseClient(true);
     const { data: authData } = await supabase.auth.admin.listUsers();
-    const students = authData?.users?.filter(u => u.user_metadata?.role === 'student') || [];
+    // Only include users with explicit student role, exclude teachers/admins and the current user
+    const students = authData?.users?.filter(u =>
+      u.user_metadata?.role === 'student' && u.email !== user.email
+    ) || [];
     const profileEntries = await kvGetByPrefix('student_profile:');
     const profileMap = new Map();
     for (const entry of profileEntries) {

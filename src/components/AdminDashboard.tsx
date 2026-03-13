@@ -99,23 +99,25 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
 
       if (response.ok) {
         const data = await response.json();
-        setStudents(data.students || getDefaultStudents());
+        // Filter out any dummy/default students that may have been accidentally saved
+        const realStudents = (data.students || []).filter(s =>
+          s?.email && !s.email.endsWith('@dentalcollege.edu')
+        );
+        setStudents(realStudents);
         setClasses(data.classes || getDefaultClasses());
         // Only update tasks from server if localStorage was empty
         if (!savedTasks && data.tasks) {
           setTasks(data.tasks);
         }
       } else {
-        // If no data exists yet, use defaults
-        setStudents(getDefaultStudents());
+        setStudents([]);
         setClasses(getDefaultClasses());
       }
     } catch (error) {
       console.error('Error loading teacher data:', error);
       toast.error('Failed to load data');
-      // Use defaults on error
-      setStudents(getDefaultStudents());
-      setClasses(getDefaultClasses());
+      setStudents([]);
+      setClasses([]);
     } finally {
       setIsLoadingData(false);
     }
@@ -466,8 +468,21 @@ export function AdminDashboard({ currentUser: initialUser, onLogout, accessToken
   });
 
   const renderContent = () => {
-    // Combine manually added students with registered students
-    const allStudents = [...students, ...registeredStudents];
+    // Combine manually added students with registered students, deduplicating by email.
+    // Registered portal students take precedence (more reliable data).
+    // Filter out the teacher/admin account.
+    const teacherEmail = currentUser?.email?.toLowerCase();
+    const emailsSeen = new Set();
+    const allStudents = [...registeredStudents, ...students]
+      .filter(s => {
+        if (!s?.email) return false;
+        const email = s.email.toLowerCase();
+        if (email === teacherEmail) return false;
+        if (s.role === 'teacher' || s.isTeacher) return false;
+        if (emailsSeen.has(email)) return false;
+        emailsSeen.add(email);
+        return true;
+      });
     
     switch (activeView) {
       case 'students':
