@@ -4,10 +4,10 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Mail, Lock, Eye, EyeOff, User, BookOpen, GraduationCap, Loader2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, BookOpen, GraduationCap, Loader2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 
-export function Signup({ onSignup, onSwitchToLogin }) {
+export function Signup({ onSignup, onSwitchToLogin, onBack }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -51,6 +51,15 @@ export function Signup({ onSignup, onSwitchToLogin }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4">
       <div className="w-full max-w-md">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-purple-600 transition-colors mb-6 group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            Back to Portal Selection
+          </button>
+        )}
         {/* Logo/Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl mb-4 shadow-lg">

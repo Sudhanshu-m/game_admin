@@ -375,10 +375,14 @@ app.get('/make-server-2fad19e1/teacher/all-students', async (req, res) => {
     const assignedEmails = new Set(Array.isArray(teacherStudents) ? teacherStudents.map(s => s.email) : []);
     const result = students.map(u => {
       const profile = profileMap.get(u.email) || {};
-      const name = u.user_metadata?.name || u.email?.split('@')[0] || 'Student';
+      const meta = u.user_metadata || {};
+      const name = meta.name || u.email?.split('@')[0] || 'Student';
       return {
         id: u.id, name, email: u.email,
         avatar: name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+        username: profile.username || meta.username || '',
+        rollNumber: profile.rollNumber || meta.rollNumber || '',
+        batch: profile.batch || meta.batch || '',
         currentLevel: profile.currentLevel || 1,
         totalPoints: profile.totalPoints || 0,
         gameProgress: profile.gameProgress || 0,
@@ -387,7 +391,7 @@ app.get('/make-server-2fad19e1/teacher/all-students', async (req, res) => {
         subjects: profile.subjects || [],
         averageGrade: 0,
         classId: profile.classId || null,
-        className: profile.className || null,
+        className: profile.className || meta.class || null,
         isRegistered: true,
         isAssigned: assignedEmails.has(u.email),
         registeredAt: u.created_at,
@@ -481,15 +485,46 @@ app.post('/make-server-2fad19e1/signup', async (req, res) => {
 app.post('/make-server-2fad19e1/student/signup', async (req, res) => {
   try {
     const supabase = getSupabaseClient(true);
-    const { email, password, name, ...rest } = req.body;
+    const { email, password, name, username, rollNumber, batch, class: className, ...rest } = req.body;
     if (!email || !password || !name) return res.status(400).json({ error: 'Email, password and name are required' });
+
     const { data, error } = await supabase.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: { name, role: 'student', ...rest },
+      user_metadata: { name, role: 'student', username, rollNumber, batch, class: className, ...rest },
     });
     if (error) return res.status(400).json({ error: error.message });
+
+    // Try to find a matching classId from any teacher's classes based on className
+    let matchedClassId = null;
+    if (className) {
+      try {
+        const allClassesEntries = await kvGetByPrefix('classes:');
+        for (const entry of allClassesEntries) {
+          const classes = Array.isArray(entry.value) ? entry.value : [];
+          const match = classes.find(c => c.name === className || c.subject === className);
+          if (match) { matchedClassId = match.id; break; }
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    // Save the student profile to KV so admin can see class, batch, roll number etc.
+    const profileKey = `student_profile:${email}`;
+    await kvSet(profileKey, {
+      email,
+      name,
+      username: username || '',
+      rollNumber: rollNumber || '',
+      batch: batch || '',
+      className: className || '',
+      classId: matchedClassId || null,
+      totalPoints: 0,
+      currentLevel: 1,
+      gameProgress: 0,
+      registeredAt: new Date().toISOString(),
+    });
+
     return res.json({ success: true, user: data.user });
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -506,6 +541,7 @@ app.get('/make-server-2fad19e1/student/profile', async (req, res) => {
     const role = user.user_metadata?.role;
     if (role === 'teacher') return res.status(403).json({ error: 'Access denied. Not a student account.' });
     const name = user.user_metadata?.name || user.email?.split('@')[0] || 'Student';
+    const meta = user.user_metadata || {};
     const profile = (await kvGet(`student_profile:${user.email}`)) || {};
     return res.json({
       student: {
@@ -514,11 +550,14 @@ app.get('/make-server-2fad19e1/student/profile', async (req, res) => {
         email: user.email,
         avatar: name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
         role: 'student',
+        username: profile.username || meta.username || '',
+        rollNumber: profile.rollNumber || meta.rollNumber || '',
+        batch: profile.batch || meta.batch || '',
         currentLevel: profile.currentLevel || 1,
         totalPoints: profile.totalPoints || 0,
         gameProgress: profile.gameProgress || 0,
         classId: profile.classId || null,
-        className: profile.className || null,
+        className: profile.className || meta.class || null,
       }
     });
   } catch (err) {

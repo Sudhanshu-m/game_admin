@@ -221,6 +221,7 @@ export function StudentApp({ onBackToLanding }) {
           <StudentSignup 
             onSignup={handleSignup}
             onSwitchToLogin={() => setShowSignup(false)}
+            onBack={onBackToLanding}
           />
           <Toaster />
         </>

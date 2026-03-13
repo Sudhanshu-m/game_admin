@@ -3,11 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { Mail, Lock, Eye, EyeOff, GraduationCap, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, GraduationCap, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
 import { ConnectionTest } from './ConnectionTest';
 
-export function Login({ onLogin, onSwitchToSignup }) {
+export function Login({ onLogin, onSwitchToSignup, onBack }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -56,6 +56,15 @@ export function Login({ onLogin, onSwitchToSignup }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
       <div className="w-full max-w-md">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-blue-600 transition-colors mb-6 group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            Back to Portal Selection
+          </button>
+        )}
         {/* Logo/Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 shadow-lg">

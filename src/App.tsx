@@ -323,6 +323,7 @@ export default function App() {
           <Signup 
             onSignup={handleSignup}
             onSwitchToLogin={() => setShowSignup(false)}
+            onBack={() => { setShowSignup(false); setPortalMode(null); }}
           />
           <Toaster />
         </>
@@ -333,6 +334,7 @@ export default function App() {
         <Login 
           onLogin={handleLogin}
           onSwitchToSignup={() => setShowSignup(true)}
+          onBack={() => setPortalMode(null)}
         />
         <Toaster />
       </>

@@ -120,14 +120,11 @@ export function StudentDashboard({
 
   const loadStudentData = async () => {
     try {
-      const response = await fetch(
-        `/make-server-2fad19e1/student/data`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+      const response = await fetch(`/make-server-2fad19e1/student/data`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
         },
-      );
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -173,14 +170,11 @@ export function StudentDashboard({
 
   const checkDailyQuest = async () => {
     try {
-      const response = await fetch(
-        `/make-server-2fad19e1/quest`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+      const response = await fetch(`/make-server-2fad19e1/quest`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
         },
-      );
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -277,17 +271,14 @@ export function StudentDashboard({
 
   const markNotificationAsRead = async (notificationId) => {
     try {
-      await fetch(
-        `/make-server-2fad19e1/student/notifications/read`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ notificationId }),
+      await fetch(`/make-server-2fad19e1/student/notifications/read`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({ notificationId }),
+      });
 
       setNotifications((prev) =>
         prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n)),
@@ -744,17 +735,21 @@ export function StudentDashboard({
                     <div className="flex items-center justify-between">
                       <h2 className="text-2xl font-black text-gray-800 flex items-center gap-3">
                         <BookOpen className="w-8 h-8 text-indigo-600" />
-                        MY ACADEMIC GRADES
+                        MY GRADES
                       </h2>
                       <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-2xl shadow-sm border border-indigo-50">
                         <p className="text-xs font-bold text-gray-500">
-                          AVG GRADE
+                          AVG SCORE
                         </p>
                         <span className="text-lg font-black text-indigo-600">
                           {grades.length > 0
                             ? Math.round(
-                                grades.reduce((a, b) => a + (b.score || 0), 0) /
-                                  grades.length,
+                                grades.reduce(
+                                  (a, b) =>
+                                    a +
+                                    (typeof b.score === "number" ? b.score : 0),
+                                  0,
+                                ) / grades.length,
                               )
                             : 0}
                           %
@@ -818,19 +813,17 @@ export function StudentDashboard({
                                       ).toLocaleDateString()}
                                     </td>
                                     <td className="px-6 py-5 text-right">
-                                      <div className="flex flex-col items-end">
+                                      <div className="flex flex-col items-end gap-1">
                                         <span
-                                          className={`text-lg font-black bg-gradient-to-r ${badge.color} bg-clip-text text-transparent`}
+                                          className={`text-2xl font-black bg-gradient-to-r ${badge.color} bg-clip-text text-transparent`}
                                         >
-                                          {grade.score !== undefined
-                                            ? `${grade.score}/${grade.maxScore}`
-                                            : grade.grade}
+                                          {grade.grade || "—"}
                                         </span>
-                                        <span className="text-[10px] font-bold text-gray-400">
-                                          LEVEL{" "}
-                                          {Math.floor((grade.score || 0) / 10)}{" "}
-                                          REWARD
-                                        </span>
+                                        {typeof grade.score === "number" && (
+                                          <span className="text-xs font-bold text-gray-400">
+                                            {grade.score}%
+                                          </span>
+                                        )}
                                       </div>
                                     </td>
                                   </tr>
@@ -1011,16 +1004,23 @@ export function StudentDashboard({
                                     <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                                       <div className="flex items-center gap-2">
                                         <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 text-[10px] font-black">
-                                          {grade ? "A+" : "OK"}
+                                          {grade ? grade.grade || "✓" : "✓"}
                                         </div>
                                         <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
                                           {grade ? "Graded" : "Submitted"}
                                         </p>
                                       </div>
                                       {grade && (
-                                        <span className="text-lg font-black text-indigo-600 italic">
-                                          {grade.score}%
-                                        </span>
+                                        <div className="flex flex-col items-end">
+                                          <span className="text-lg font-black text-indigo-600">
+                                            {grade.grade}
+                                          </span>
+                                          {typeof grade.score === "number" && (
+                                            <span className="text-[10px] font-bold text-gray-400">
+                                              {grade.score}%
+                                            </span>
+                                          )}
+                                        </div>
                                       )}
                                     </div>
                                   </CardContent>
